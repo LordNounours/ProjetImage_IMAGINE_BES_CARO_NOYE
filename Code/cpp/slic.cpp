@@ -98,7 +98,38 @@ float distanceEuclidienne(Point p1, Point p2) {
     float distanceLab=sqrt(pow(p2.L-p1.L,2)+pow(p2.a-p1.a,2)+pow(p2.b-p1.b,2));
     return distanceXY+distanceLab;
 }
-void slic(OCTET *ImgIn, OCTET *ImgOut,int nH,int nW,int k){
+void propagation(OCTET *ImgIn, OCTET *ImgOut, int nH, int nW, int k, vector<int> classe, int x, int y, int frontiere) {
+    if (x < 0 || y < 0 || x >= nW || y >= nH) {
+        return; // Arrêter si les coordonnées sont en dehors de l'image
+    }
+
+    int pixelIndex = y * nW + x;
+    if (classe[pixelIndex] != k) {
+        ImgOut[pixelIndex*3] = frontiere;
+        ImgOut[pixelIndex*3+1] = frontiere;
+        ImgOut[pixelIndex*3+2] = frontiere; // Colorier le pixel en frontière
+        return; // Arrêter si le pixel est une frontière
+    }
+
+    // Explorer les 4 directions (haut, bas, gauche, droite)
+    propagation(ImgIn, ImgOut, nH, nW, k, classe, x, y - 1, frontiere); // Haut
+    propagation(ImgIn, ImgOut, nH, nW, k, classe, x, y + 1, frontiere); // Bas
+    propagation(ImgIn, ImgOut, nH, nW, k, classe, x - 1, y, frontiere); // Gauche
+    propagation(ImgIn, ImgOut, nH, nW, k, classe, x + 1, y, frontiere); // Droite
+}
+
+void propagateFromCentroids(OCTET *ImgIn, OCTET *ImgOut, int nH, int nW, vector<Point> centroide, vector<int> classe) {
+    int frontiere = 255; // Couleur des bords de superpixel
+    int k = centroide.size();
+    for (int i = 0; i < k; i++) {
+        int x = centroide[i].x;
+        int y = centroide[i].y;
+        propagation(ImgIn, ImgOut, nH, nW, i, classe, x, y, frontiere);
+    }
+}
+
+
+void slic(OCTET *ImgIn, OCTET *ImgOut,int nH,int nW,int k,int seuil){
     vector<Point> centroide;
     //ordre des boucles importants que ce soit le même a chaque fois pour ordre dans classe
     vector<int> classe;
@@ -116,10 +147,10 @@ void slic(OCTET *ImgIn, OCTET *ImgOut,int nH,int nW,int k){
             Point pixel={i,j,ImgIn[(j*nW+i)*3],ImgIn[(j*nW+i)*3+1],ImgIn[(j*nW+i)*3+2]};
             float d=distanceEuclidienne(pixel,centroide[0]);
             int indice=0;
-            for(int k=1;k<k;k++){
-                if(distanceEuclidienne(pixel,centroide[k])<d){
-                    indice=k;
-                    d=distanceEuclidienne(pixel,centroide[k]);
+            for(int l=1;l<k;l++){
+                if(distanceEuclidienne(pixel,centroide[l])<d){
+                    indice=l;
+                    d=distanceEuclidienne(pixel,centroide[l]);
                 }
             }
             classe.push_back(indice);
@@ -134,26 +165,73 @@ void slic(OCTET *ImgIn, OCTET *ImgOut,int nH,int nW,int k){
             Point pixel={i,j,ImgIn[(j*nW+i)*3],ImgIn[(j*nW+i)*3+1],ImgIn[(j*nW+i)*3+2]};
             float d=distanceEuclidienne(pixel,centroide[0]);
             int indice=0;
-            for(int k=1;k<k;k++){
-               if(classe[j*nW+i]==k){
-                    addPoints(centroide[k],pixel);
-                    count[k]++;
+            for(int l=0;l<k;l++){
+               if(classe[j*nW+i]==l){
+                    addPoints(centroide[l],pixel);
+                    count[l]++;
+                    break;
                }
             }
         }
     }
-    for(int k=0;k<k;k++) divPoint(centroide[k],count[k]);
+    for(int l=0;l<k;l++) divPoint(centroide[l],count[l]);
     //Itération
+    int change=0;
+    while(change>seuil)
+    {   
+        change=0;
+        for(int i=0;i<nW;i++){
+            for(int j=0;j<nH;j++){
+                Point pixel={i,j,ImgIn[(j*nW+i)*3],ImgIn[(j*nW+i)*3+1],ImgIn[(j*nW+i)*3+2]};
+                float d=distanceEuclidienne(pixel,centroide[0]);
+                int indice=0;
+                for(int l=1;l<k;l++){
+                    if(distanceEuclidienne(pixel,centroide[l])<d){
+                        indice=l;
+                        d=distanceEuclidienne(pixel,centroide[l]);
+                    }
+                }
+                if(indice!=classe[j*nW+i]) {
+                    change++;
+                    classe[j*nW+i]=indice;
+                }
+            }
+        }
+        //Recalcule des nouveaux centroides
+        //Mise a 0 des valeurs de centroides
+        int count[k]={0}; // Déclaration d'un tableau de taille k
+        resetVectorPoint(centroide);
+        for(int i=0;i<nW;i++){
+            for(int j=0;j<nH;j++){
+                Point pixel={i,j,ImgIn[(j*nW+i)*3],ImgIn[(j*nW+i)*3+1],ImgIn[(j*nW+i)*3+2]};
+                float d=distanceEuclidienne(pixel,centroide[0]);
+                int indice=0;
+                for(int l=0;l<k;l++){
+                    if(classe[j*nW+i]==l){
+                            addPoints(centroide[l],pixel);
+                            count[l]++;
+                            break;
+                    }
+                }
+            }
+        }
+    }
+    for(int l=0;l<k;l++){
+        cout << "Centroide " << l+1 << ": x = " << centroide[l].x << ", y = " << centroide[l].y
+         << ", L = " << centroide[l].L << ", a = " << centroide[l].a << ", b = " << centroide[l].b << endl;
+    }
+    //propagateFromCentroids(ImgIn,ImgOut,nH,nW,centroide,classe);
 }
+
 
 int main(int argc, char* argv[])
 {
     char cNomImgLue[250], cNomImgConv[250],cNomImgOut[250];
-    int nH, nW, nTaille,k;
+    int nH, nW, nTaille,k,s;
   
-    if (argc != 5) 
+    if (argc != 6) 
         {
-        printf("Usage: ImageIn.ppm ImageConv.ppm ImgOut.ppm k\n"); 
+        printf("Usage: ImageIn.ppm ImageConv.ppm ImgOut.ppm k s\n"); 
         exit (1) ;
         }
 
@@ -161,6 +239,7 @@ int main(int argc, char* argv[])
     sscanf (argv[2],"%s",cNomImgConv);
     sscanf (argv[3],"%s",cNomImgOut);
     sscanf (argv[4],"%d",&k);
+    sscanf (argv[5],"%d",&s);
 
 
     OCTET *ImgIn, *ImgConv,*ImgOut;
@@ -175,7 +254,10 @@ int main(int argc, char* argv[])
     lire_image_ppm(cNomImgLue, ImgOut, nH * nW);
     convert_rgb_to_lab(ImgIn,ImgConv,nTaille);
     ecrire_image_ppm(cNomImgConv, ImgConv,  nH, nW);
-    slic(ImgConv,ImgOut,nH,nW,k);
+    slic(ImgConv,ImgOut,nH,nW,k,s);
+    ecrire_image_ppm(cNomImgOut, ImgOut,  nH, nW);
     free(ImgIn);
+    free(ImgConv);
+    free(ImgOut);
     return 1;
 }
