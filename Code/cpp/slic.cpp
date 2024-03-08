@@ -98,36 +98,7 @@ float distanceEuclidienne(Point p1, Point p2) {
     float distanceLab=sqrt(pow(p2.L-p1.L,2)+pow(p2.a-p1.a,2)+pow(p2.b-p1.b,2));
     return distanceXY+distanceLab;
 }
-void propagation(OCTET *ImgIn, OCTET *ImgOut, int nH, int nW, int k, vector<int> classe, int x, int y, int frontiere) {
-    if (x < 0 || y < 0 || x >= nW || y >= nH) {
-        return; // Arrêter si les coordonnées sont en dehors de l'image
-    }
-
-    int pixelIndex = y * nW + x;
-    if (classe[pixelIndex] != k) {
-        ImgOut[pixelIndex*3] = frontiere;
-        ImgOut[pixelIndex*3+1] = frontiere;
-        ImgOut[pixelIndex*3+2] = frontiere; // Colorier le pixel en frontière
-        return; // Arrêter si le pixel est une frontière
-    }
-
-    // Explorer les 4 directions (haut, bas, gauche, droite)
-    propagation(ImgIn, ImgOut, nH, nW, k, classe, x, y - 1, frontiere); // Haut
-    propagation(ImgIn, ImgOut, nH, nW, k, classe, x, y + 1, frontiere); // Bas
-    propagation(ImgIn, ImgOut, nH, nW, k, classe, x - 1, y, frontiere); // Gauche
-    propagation(ImgIn, ImgOut, nH, nW, k, classe, x + 1, y, frontiere); // Droite
-}
-
-void propagateFromCentroids(OCTET *ImgIn, OCTET *ImgOut, int nH, int nW, vector<Point> centroide, vector<int> classe) {
-    int frontiere = 255; // Couleur des bords de superpixel
-    int k = centroide.size();
-    for (int i = 0; i < k; i++) {
-        int x = centroide[i].x;
-        int y = centroide[i].y;
-        propagation(ImgIn, ImgOut, nH, nW, i, classe, x, y, frontiere);
-    }
-}
-void generateCentroidsGrid(vector<Point>& centroids, int nH, int nW, int k) {
+void generateCentroidsGrid(vector<Point>& centroids, int nH, int nW, int k,OCTET* ImgIn) {
     int gridSize = ceil(sqrt(k)); // Nombre de cellules dans chaque direction
 
     int cellWidth = nW / gridSize;
@@ -138,7 +109,7 @@ void generateCentroidsGrid(vector<Point>& centroids, int nH, int nW, int k) {
             int randomX = (i * cellWidth) + (rand() % cellWidth);
             int randomY = (j * cellHeight) + (rand() % cellHeight);
 
-            Point center = {randomX, randomY, 0, 0, 0}; // Vous pouvez initialiser les valeurs de couleur si nécessaire
+            Point center = {randomX, randomY, ImgIn[3*(j*nW+i)], ImgIn[3*(j*nW+i)+1], ImgIn[3*(j*nW+i)+2]}; // Vous pouvez initialiser les valeurs de couleur si nécessaire
             centroids.push_back(center);
         }
     }
@@ -147,10 +118,25 @@ void color(OCTET *ImgIn, OCTET *ImgOut, int nH, int nW, vector<int> classe){
     for(int i=0;i<nW;i++){
         for(int j=0;j<nH;j++){
             int k = classe[j*nW+i];
-            int color=k*20;
-            ImgOut[3*(j*nW+i)]=color;
-            ImgOut[3*(j*nW+i)+1]=color;
-            ImgOut[3*(j*nW+i)+2]=color;
+            int k2 = classe[j*nW+i+1];
+            int k3 = classe[(j+1)*nW+i];
+            int color=0;
+            if(k!=k2){
+                ImgOut[3*(j*nW+i)]=color;
+                ImgOut[3*(j*nW+i)+1]=color;
+                ImgOut[3*(j*nW+i)+2]=color;
+                ImgOut[3*(j*nW+i+1)]=color;
+                ImgOut[3*(j*nW+i+1)+1]=color;
+                ImgOut[3*(j*nW+i+1)+2]=color;
+            }
+            if(k!=k3){
+                ImgOut[3*(j*nW+i)]=color;
+                ImgOut[3*(j*nW+i)+1]=color;
+                ImgOut[3*(j*nW+i)+2]=color;
+                ImgOut[3*((j+1)*nW+i)]=color;
+                ImgOut[3*((j+1)*nW+i)+1]=color;
+                ImgOut[3*((j+1)*nW+i)+2]=color;
+            }
         }
     }
 }
@@ -166,9 +152,9 @@ void slic(OCTET *ImgIn, OCTET *ImgOut,int nH,int nW,int k,int seuil){
         Point center={randomX,randomY,ImgIn[(randomY*nW+randomX)*3],ImgIn[(randomY*nW+randomX)*3+1],ImgIn[(randomY*nW+randomX)*3+2]};
         centroide.push_back(center);
     }*/
-    generateCentroidsGrid(centroide,nH,nW,k);
+    generateCentroidsGrid(centroide,nH,nW,k,ImgIn);
     for(int l=0;l<k;l++){
-        cout << "Centroide " << l+1 << ": x = " << centroide[l].x << ", y = " << centroide[l].y
+        std::cout << "Centroide " << l+1 << ": x = " << centroide[l].x << ", y = " << centroide[l].y
          << ", L = " << centroide[l].L << ", a = " << centroide[l].a << ", b = " << centroide[l].b << endl;
     }
     //Initialisation
@@ -248,11 +234,10 @@ void slic(OCTET *ImgIn, OCTET *ImgOut,int nH,int nW,int k,int seuil){
             }
         }
         for(int l=0;l<k;l++) divPoint(centroide[l],count[l]);
-        cout<<change<<endl;
+        std::cout<<change<<endl;
     }
-    //propagateFromCentroids(ImgIn,ImgOut,nH,nW,centroide,classe);
      for(int l=0;l<k;l++){
-        cout << "Centroide " << l+1 << ": x = " << centroide[l].x << ", y = " << centroide[l].y
+        std::cout << "Centroide " << l+1 << ": x = " << centroide[l].x << ", y = " << centroide[l].y
          << ", L = " << centroide[l].L << ", a = " << centroide[l].a << ", b = " << centroide[l].b << endl;
     }
     color(ImgIn,ImgOut,nH,nW,classe);
