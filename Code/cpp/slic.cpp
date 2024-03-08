@@ -127,18 +127,49 @@ void propagateFromCentroids(OCTET *ImgIn, OCTET *ImgOut, int nH, int nW, vector<
         propagation(ImgIn, ImgOut, nH, nW, i, classe, x, y, frontiere);
     }
 }
+void generateCentroidsGrid(vector<Point>& centroids, int nH, int nW, int k) {
+    int gridSize = ceil(sqrt(k)); // Nombre de cellules dans chaque direction
 
+    int cellWidth = nW / gridSize;
+    int cellHeight = nH / gridSize;
 
+    for (int i = 0; i < gridSize; ++i) {
+        for (int j = 0; j < gridSize; ++j) {
+            int randomX = (i * cellWidth) + (rand() % cellWidth);
+            int randomY = (j * cellHeight) + (rand() % cellHeight);
+
+            Point center = {randomX, randomY, 0, 0, 0}; // Vous pouvez initialiser les valeurs de couleur si nécessaire
+            centroids.push_back(center);
+        }
+    }
+}
+void color(OCTET *ImgIn, OCTET *ImgOut, int nH, int nW, vector<int> classe){
+    for(int i=0;i<nW;i++){
+        for(int j=0;j<nH;j++){
+            int k = classe[j*nW+i];
+            int color=k*20;
+            ImgOut[3*(j*nW+i)]=color;
+            ImgOut[3*(j*nW+i)+1]=color;
+            ImgOut[3*(j*nW+i)+2]=color;
+        }
+    }
+}
 void slic(OCTET *ImgIn, OCTET *ImgOut,int nH,int nW,int k,int seuil){
     vector<Point> centroide;
     //ordre des boucles importants que ce soit le même a chaque fois pour ordre dans classe
     vector<int> classe;
+    /*
     srand(time(NULL));
     for(int i=0;i<k;i++){
         int randomX = rand() % (nW + 1);
         int randomY = rand() % (nH + 1);
         Point center={randomX,randomY,ImgIn[(randomY*nW+randomX)*3],ImgIn[(randomY*nW+randomX)*3+1],ImgIn[(randomY*nW+randomX)*3+2]};
         centroide.push_back(center);
+    }*/
+    generateCentroidsGrid(centroide,nH,nW,k);
+    for(int l=0;l<k;l++){
+        cout << "Centroide " << l+1 << ": x = " << centroide[l].x << ", y = " << centroide[l].y
+         << ", L = " << centroide[l].L << ", a = " << centroide[l].a << ", b = " << centroide[l].b << endl;
     }
     //Initialisation
     //Assignation centroide aux pixels
@@ -176,7 +207,8 @@ void slic(OCTET *ImgIn, OCTET *ImgOut,int nH,int nW,int k,int seuil){
     }
     for(int l=0;l<k;l++) divPoint(centroide[l],count[l]);
     //Itération
-    int change=0;
+    
+    int change=nW*nH;
     while(change>seuil)
     {   
         change=0;
@@ -215,12 +247,15 @@ void slic(OCTET *ImgIn, OCTET *ImgOut,int nH,int nW,int k,int seuil){
                 }
             }
         }
+        for(int l=0;l<k;l++) divPoint(centroide[l],count[l]);
+        cout<<change<<endl;
     }
-    for(int l=0;l<k;l++){
+    //propagateFromCentroids(ImgIn,ImgOut,nH,nW,centroide,classe);
+     for(int l=0;l<k;l++){
         cout << "Centroide " << l+1 << ": x = " << centroide[l].x << ", y = " << centroide[l].y
          << ", L = " << centroide[l].L << ", a = " << centroide[l].a << ", b = " << centroide[l].b << endl;
     }
-    //propagateFromCentroids(ImgIn,ImgOut,nH,nW,centroide,classe);
+    color(ImgIn,ImgOut,nH,nW,classe);
 }
 
 
