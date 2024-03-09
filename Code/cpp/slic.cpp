@@ -109,8 +109,8 @@ void generateCentroidsGrid(vector<Point>& centroids, int nH, int nW, int k,OCTET
     }
 }
 void color(OCTET *ImgIn, OCTET *ImgOut, int nH, int nW, vector<int> classe){
-    for(int i=0;i<nW;i++){
-        for(int j=0;j<nH;j++){
+    for(int i=0;i<nW-1;i++){
+        for(int j=0;j<nH-1;j++){
             int k = classe[j*nW+i];
             int k2 = classe[j*nW+i+1];//prochain pixel horizontal
             int k3 = classe[(j+1)*nW+i];//prochain pixel vertical
