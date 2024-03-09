@@ -6,6 +6,8 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
+#include "colorm.h"
+
 #include <vector>
 #include <iostream>
 #include <cmath>
@@ -18,38 +20,29 @@ struct Component {
     std::map<Component*, double> minConnectivity;
     std::vector<int> pixels;
     double internalMaxMST;
-    double r;
-    double g;
-    double b;
+    colorm::Lab color;
 };
 
-double getPixelWeight(std::uint8_t* inputImage, int width, int height, int x, int y) {
-    int pixelPosition{3 * (x + y * width)}; 
-    double dR{static_cast<double>(inputImage[pixelPosition])};
-    double dG{static_cast<double>(inputImage[pixelPosition + 1])};
-    double dB{static_cast<double>(inputImage[pixelPosition + 2])};
-    double dX{static_cast<double>(x)};
-    double dY{static_cast<double>(x)};
-    return std::sqrt(/*dX * dX + dY * dY + */dR * dR + dG * dG + dB * dB);
-}
-
-void felzenszwalb(std::uint8_t* inputImage, std::uint8_t* outputImage, int width, int height, double c, int k) {
+void felzenszwalb(std::uint8_t* inputImage, std::uint8_t* outputImage, int width, int height, double c) {
 
     // Initialisation
     // Calcul des poids des pixels et création des components (où chaque pixel est son propre component)
-    std::vector<double> weights(width * height);
+    std::vector<colorm::Lab> pixelColors(width * height);
     std::vector<Component*> componentMap(width * height);
     for (int i{}; i < width; ++i) {
         for (int j{}; j < height; ++j) {
             int pixelPosition{i + j * width};
-            weights[pixelPosition] = getPixelWeight(inputImage, width, height, i, j);
+            colorm::Lab pixelColor{colorm::Rgb{
+                static_cast<double>(inputImage[3 * pixelPosition]),
+                static_cast<double>(inputImage[3 * pixelPosition + 1]),
+                static_cast<double>(inputImage[3 * pixelPosition + 2])
+            }};
+            pixelColors[pixelPosition] = pixelColor;
             componentMap[pixelPosition] = new Component{
                 {},
                 {pixelPosition},
                 0.0,
-                static_cast<double>(inputImage[3 * pixelPosition]),
-                static_cast<double>(inputImage[3 * pixelPosition + 1]),
-                static_cast<double>(inputImage[3 * pixelPosition + 2]),
+                pixelColor
             };
         }
     }
@@ -65,8 +58,8 @@ void felzenszwalb(std::uint8_t* inputImage, std::uint8_t* outputImage, int width
     }
 
     // Tri des arêtes horizontales dans l'ordre croissant
-    std::sort(horizontalEdges.begin(), horizontalEdges.end(), [&weights](double id1, double id2) {
-        return std::abs(weights[id1] - weights[id1 + 1]) < std::abs(weights[id2] - weights[id2 + 1]);
+    std::sort(horizontalEdges.begin(), horizontalEdges.end(), [&pixelColors](double id1, double id2) {
+        return pixelColors[id1].distance(pixelColors[id1 + 1]) < pixelColors[id2].distance(pixelColors[id2 + 1]);
     });
 
     // Construction des arêtes verticales
@@ -80,8 +73,8 @@ void felzenszwalb(std::uint8_t* inputImage, std::uint8_t* outputImage, int width
     }
 
     // Tri des arêtes verticales dans l'ordre croissant
-    std::sort(verticalEdges.begin(), verticalEdges.end(), [&weights, width](double id1, double id2) {
-        return std::abs(weights[id1] - weights[id1 + width]) < std::abs(weights[id2] - weights[id2 + width]);
+    std::sort(verticalEdges.begin(), verticalEdges.end(), [&pixelColors, width](double id1, double id2) {
+        return pixelColors[id1].distance(pixelColors[id1 + width]) < pixelColors[id2].distance(pixelColors[id2 + width]);
     });
 
     int componentsCount{width * height};
@@ -112,7 +105,7 @@ void felzenszwalb(std::uint8_t* inputImage, std::uint8_t* outputImage, int width
             continue;
         }
 
-        double edgeWeight{std::abs(weights[firstPixel] - weights[secondPixel])};
+        double edgeWeight{pixelColors[firstPixel].distance(pixelColors[secondPixel])};
 
         // La différence entre deux components est le poids minimal d'une arête qui connecte les deux components
         // Sachant que les arêtes sont parcourues dans l'ordre croissant de leur poids, c'est donc toujours la première
@@ -134,9 +127,9 @@ void felzenszwalb(std::uint8_t* inputImage, std::uint8_t* outputImage, int width
             // Calcul de la nouvelle moyenne des pixels de la fusion
             double denom{1.0 / (firstComponentPixelCount + secondComponentPixelCount)};
 
-            firstComponent->r = denom * (firstComponent->r * firstComponentPixelCount + secondComponent->r * secondComponentPixelCount);
-            firstComponent->g = denom * (firstComponent->g * firstComponentPixelCount + secondComponent->g * secondComponentPixelCount);
-            firstComponent->b = denom * (firstComponent->b * firstComponentPixelCount + secondComponent->b * secondComponentPixelCount);
+            firstComponent->color.setLightness(denom * (firstComponent->color.lightness() * firstComponentPixelCount + secondComponent->color.lightness() * secondComponentPixelCount));
+            firstComponent->color.setA(denom * (firstComponent->color.a() * firstComponentPixelCount + secondComponent->color.a() * secondComponentPixelCount));
+            firstComponent->color.setB(denom * (firstComponent->color.b() * firstComponentPixelCount + secondComponent->color.b() * secondComponentPixelCount));
 
             // Fusion des components
             for (int pixel : secondComponent->pixels) {
@@ -153,25 +146,22 @@ void felzenszwalb(std::uint8_t* inputImage, std::uint8_t* outputImage, int width
             --componentsCount;
 
             delete secondComponent;
-
-            if (componentsCount <= k) {
-                break;
-            }
         }
     }
 
     // Construction de l'image finale
     for (int i{}; i < width * height; ++i) {
-        outputImage[3 * i] = static_cast<std::uint8_t>(std::round(componentMap[i]->r));
-        outputImage[3 * i + 1] = static_cast<std::uint8_t>(std::round(componentMap[i]->g));
-        outputImage[3 * i + 2] = static_cast<std::uint8_t>(std::round(componentMap[i]->b));
+        colorm::Rgb rgbColor{componentMap[i]->color};
+        outputImage[3 * i] = static_cast<std::uint8_t>(std::round(rgbColor.red()));
+        outputImage[3 * i + 1] = static_cast<std::uint8_t>(std::round(rgbColor.green()));
+        outputImage[3 * i + 2] = static_cast<std::uint8_t>(std::round(rgbColor.blue()));
     }
 
 }
 
 int main(int argc, const char** argv) {
-    if (argc < 5) {
-        std::cout << "Usage :\n  - Image d'entrée\n  - Image de sortie\n  - Coefficient de connexivité C (20.0 par exemple)\n  - Nombre maximum de superpixels K\n";
+    if (argc < 4) {
+        std::cout << "Usage :\n  - Image d'entrée\n  - Image de sortie\n  - Coefficient de connexivité C (20.0 par exemple)\n";
         return 0;
     }
 
@@ -181,11 +171,10 @@ int main(int argc, const char** argv) {
     std::uint8_t* inputImage{stbi_load(argv[1], &width, &height, &channelsCount, STBI_rgb)};
     std::uint8_t* outputImage = new std::uint8_t[3 * width * height];
     
-    felzenszwalb(inputImage, outputImage, width, height, std::atof(argv[3]), std::atoi(argv[4]));
+    felzenszwalb(inputImage, outputImage, width, height, std::atof(argv[3]));
 
     stbi_write_png(argv[2], width, height, STBI_rgb, outputImage, 3 * width);
 
     delete[] outputImage;
     stbi_image_free(inputImage);
-
 }
