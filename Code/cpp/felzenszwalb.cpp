@@ -17,7 +17,6 @@
 #include <string>
 
 struct Component {
-    std::map<Component*, double> minConnectivity;
     std::vector<int> pixels;
     double internalMaxMST;
     colorm::Lab color;
@@ -39,7 +38,6 @@ void felzenszwalb(std::uint8_t* inputImage, std::uint8_t* outputImage, int width
             }};
             pixelColors[pixelPosition] = pixelColor;
             componentMap[pixelPosition] = new Component{
-                {},
                 {pixelPosition},
                 0.0,
                 pixelColor
@@ -85,8 +83,15 @@ void felzenszwalb(std::uint8_t* inputImage, std::uint8_t* outputImage, int width
     for (int i{}; i < horizontalEdgesCount + verticalEdgesCount; ++i) {
         int firstPixel;
         int secondPixel;
+        bool checkHorizontal{iHorizontal < horizontalEdgesCount};
+        bool checkVertical{iVertical < verticalEdgesCount};
+        if (checkHorizontal && checkVertical) {
+            double edgeWeightHorizontal{pixelColors[horizontalEdges[iHorizontal]].distance(pixelColors[horizontalEdges[iHorizontal] + 1])};
+            double edgeWeightVertical{pixelColors[verticalEdges[iVertical]].distance(pixelColors[verticalEdges[iVertical] + width])};
+            checkHorizontal = edgeWeightHorizontal <= edgeWeightVertical;
+        }
 
-        if (iHorizontal < horizontalEdgesCount && (iVertical >= verticalEdgesCount || horizontalEdges[iHorizontal] <= verticalEdges[iVertical])) {
+        if (checkHorizontal) {
             firstPixel = horizontalEdges[iHorizontal];
             secondPixel = firstPixel + 1;
             ++iHorizontal;
@@ -107,21 +112,12 @@ void felzenszwalb(std::uint8_t* inputImage, std::uint8_t* outputImage, int width
 
         double edgeWeight{pixelColors[firstPixel].distance(pixelColors[secondPixel])};
 
-        // La différence entre deux components est le poids minimal d'une arête qui connecte les deux components
-        // Sachant que les arêtes sont parcourues dans l'ordre croissant de leur poids, c'est donc toujours la première
-        if (firstComponent->minConnectivity.find(secondComponent) == firstComponent->minConnectivity.end()) {
-            firstComponent->minConnectivity[secondComponent] = edgeWeight;
-            // On ne stocke que la connectivité des components droite et bas
-        }
-        
         // Si l'équation satisfait le prédicat de fusion
         std::size_t firstComponentPixelCount{firstComponent->pixels.size()};
         std::size_t secondComponentPixelCount{firstComponent->pixels.size()};
-        double tau1{c / firstComponentPixelCount};
-        double tau2{c / secondComponentPixelCount};
-        if (firstComponent->minConnectivity[secondComponent] <= std::min(firstComponent->internalMaxMST + tau1, secondComponent->internalMaxMST + tau2)) {
+        if (edgeWeight <= std::min(firstComponent->internalMaxMST + c / firstComponentPixelCount, secondComponent->internalMaxMST + c / secondComponentPixelCount)) {
 
-            // Le poids de l'arête devient le poids maximal du MST de cette fusion
+            // Le poids de l'arête devient le poids maximal du MST de cette fusion (car il connecte les deux parties du graphe dont les arêtes ont un poids inférieur)
             firstComponent->internalMaxMST = edgeWeight;
 
             // Calcul de la nouvelle moyenne des pixels de la fusion
@@ -136,12 +132,6 @@ void felzenszwalb(std::uint8_t* inputImage, std::uint8_t* outputImage, int width
                 componentMap[pixel] = firstComponent;
             }
             firstComponent->pixels.insert(firstComponent->pixels.end(), secondComponent->pixels.begin(), secondComponent->pixels.end());
-
-            // Partage de la connectivité
-            firstComponent->minConnectivity.erase(secondComponent);
-            for (const auto& pair : secondComponent->minConnectivity) {
-                firstComponent->minConnectivity.insert(pair);
-            }
 
             --componentsCount;
 
@@ -161,7 +151,7 @@ void felzenszwalb(std::uint8_t* inputImage, std::uint8_t* outputImage, int width
 
 int main(int argc, const char** argv) {
     if (argc < 4) {
-        std::cout << "Usage :\n  - Image d'entrée\n  - Image de sortie\n  - Coefficient de connexivité C (20.0 par exemple)\n";
+        std::cout << "Usage :\n  - Image d'entrée\n  - Image de sortie\n  - Seuil k (15.0 par exemple)\n";
         return 0;
     }
 
