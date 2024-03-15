@@ -7,14 +7,6 @@
 using namespace std;
 
 
-void reduc_rgb_Ycrcb(OCTET *ImgIn, OCTET *ImgOut, int nTaille, int nW,OCTET *ImgY,OCTET *pgmCr,OCTET *pgmCb) {
-    //passage en Ycrcb
-    for(int i=0;i<nTaille;i++){
-        ImgOut[3*i]=0.299*ImgIn[3*i]+0.587*ImgIn[3*i+1]+0.114*ImgIn[3*i+2];
-        ImgOut[3*i+1]=-0.1687*ImgIn[3*i]-0.3313*ImgIn[3*i+1]+0.5*ImgIn[3*i+2]+128;
-        ImgOut[3*i+2]=0.5*ImgIn[3*i]-0.4187*ImgIn[3*i+1]-0.0813*ImgIn[3*i+2]+128;
-    }
-}
 void convert_rgb_to_lab(OCTET *ImgIn, OCTET *ImgLab, int nTaille) {
     double var_R, var_G, var_B, X, Y, Z, f_X, f_Y, f_Z;
     double var_X, var_Y, var_Z, L, a, b;
@@ -64,6 +56,9 @@ void convert_rgb_to_lab(OCTET *ImgIn, OCTET *ImgLab, int nTaille) {
         ImgLab[3*i + 2] = (OCTET)(b + 128); 
     }
 }
+
+
+
 struct Point{
     int x;
     int y;
@@ -134,23 +129,34 @@ void color(OCTET *ImgIn, OCTET *ImgOut, int nH, int nW, vector<int> classe){
         }
     }
 }
+
+void color2(OCTET *ImgIn, OCTET *ImgOut, int nH, int nW, vector<int> classe,vector<Point> centroide){
+    for(int i=0;i<nW;i++){
+        for(int j=0;j<nH;j++){
+            int k = classe[j*nW+i];
+            ImgOut[3*(j*nW+i)]=centroide[k].L;
+            ImgOut[3*(j*nW+i)+1]=centroide[k].a;
+            ImgOut[3*(j*nW+i)+2]=centroide[k].b;
+        }
+    }
+}
 //Seuil utilisé est sur le nombre de changement de classe de pixel a chaque itération.
 void slic(OCTET *ImgIn, OCTET *ImgOut,int nH,int nW,int k,int seuil){
     vector<Point> centroide;
+    vector<Point> centroideTmp(k);
     //ordre des boucles importants que ce soit le même a chaque fois pour ordre dans classe
     vector<int> classe;
     generateCentroidsGrid(centroide,nH,nW,k,ImgIn);
-    for(int l=0;l<k;l++){
-        std::cout << "Centroide " << l+1 << ": x = " << centroide[l].x << ", y = " << centroide[l].y
-         << ", L = " << centroide[l].L << ", a = " << centroide[l].a << ", b = " << centroide[l].b << endl;
-    }
     //Initialisation
     //Assignation centroide aux pixels
+    int indice;
+    Point pixel;
+    float d;
     for(int i=0;i<nW;i++){
         for(int j=0;j<nH;j++){
-            Point pixel={i,j,ImgIn[(j*nW+i)*3],ImgIn[(j*nW+i)*3+1],ImgIn[(j*nW+i)*3+2]};
-            float d=distanceEuclidienne(pixel,centroide[0]);
-            int indice=0;
+            pixel={i,j,ImgIn[(j*nW+i)*3],ImgIn[(j*nW+i)*3+1],ImgIn[(j*nW+i)*3+2]};
+            d=distanceEuclidienne(pixel,centroide[0]);
+            indice=0;
             for(int l=1;l<k;l++){
                 if(distanceEuclidienne(pixel,centroide[l])<d){
                     indice=l;
@@ -163,22 +169,25 @@ void slic(OCTET *ImgIn, OCTET *ImgOut,int nH,int nW,int k,int seuil){
     //Recalcule des nouveaux centroides
     //Mise a 0 des valeurs de centroides
     int count[k]={0}; // Déclaration d'un tableau de taille k
-    resetVectorPoint(centroide);
+    resetVectorPoint(centroideTmp);
     for(int i=0;i<nW;i++){
         for(int j=0;j<nH;j++){
-            Point pixel={i,j,ImgIn[(j*nW+i)*3],ImgIn[(j*nW+i)*3+1],ImgIn[(j*nW+i)*3+2]};
-            float d=distanceEuclidienne(pixel,centroide[0]);
+            pixel={i,j,ImgIn[(j*nW+i)*3],ImgIn[(j*nW+i)*3+1],ImgIn[(j*nW+i)*3+2]};
+            d=distanceEuclidienne(pixel,centroide[0]);
             int indice=0;
             for(int l=0;l<k;l++){
                if(classe[j*nW+i]==l){
-                    addPoints(centroide[l],pixel);
+                    addPoints(centroideTmp[l],pixel);
                     count[l]++;
                     break;
                }
             }
         }
     }
-    for(int l=0;l<k;l++) divPoint(centroide[l],count[l]);
+    for(int l=0;l<k;l++) {
+            if(count[l]!=0)divPoint(centroideTmp[l],count[l]);
+    }
+    centroide=centroideTmp;
     //Itération
     int change=nW*nH;
     while(change>seuil)
@@ -186,9 +195,9 @@ void slic(OCTET *ImgIn, OCTET *ImgOut,int nH,int nW,int k,int seuil){
         change=0;
         for(int i=0;i<nW;i++){
             for(int j=0;j<nH;j++){
-                Point pixel={i,j,ImgIn[(j*nW+i)*3],ImgIn[(j*nW+i)*3+1],ImgIn[(j*nW+i)*3+2]};
-                float d=distanceEuclidienne(pixel,centroide[0]);
-                int indice=0;
+                pixel={i,j,ImgIn[(j*nW+i)*3],ImgIn[(j*nW+i)*3+1],ImgIn[(j*nW+i)*3+2]};
+                d=distanceEuclidienne(pixel,centroide[0]);
+                indice=0;
                 for(int l=1;l<k;l++){
                     if(distanceEuclidienne(pixel,centroide[l])<d){
                         indice=l;
@@ -204,29 +213,29 @@ void slic(OCTET *ImgIn, OCTET *ImgOut,int nH,int nW,int k,int seuil){
         //Recalcule des nouveaux centroides
         //Mise a 0 des valeurs de centroides
         int count[k]={0}; // Déclaration d'un tableau de taille k
-        resetVectorPoint(centroide);
+        resetVectorPoint(centroideTmp);
         for(int i=0;i<nW;i++){
             for(int j=0;j<nH;j++){
-                Point pixel={i,j,ImgIn[(j*nW+i)*3],ImgIn[(j*nW+i)*3+1],ImgIn[(j*nW+i)*3+2]};
-                float d=distanceEuclidienne(pixel,centroide[0]);
-                int indice=0;
+                pixel={i,j,ImgIn[(j*nW+i)*3],ImgIn[(j*nW+i)*3+1],ImgIn[(j*nW+i)*3+2]};
+                d=distanceEuclidienne(pixel,centroide[0]);
+                indice=0;
                 for(int l=0;l<k;l++){
                     if(classe[j*nW+i]==l){
-                            addPoints(centroide[l],pixel);
+                            addPoints(centroideTmp[l],pixel);
                             count[l]++;
                             break;
                     }
                 }
             }
         }
-        for(int l=0;l<k;l++) divPoint(centroide[l],count[l]);
+        for(int l=0;l<k;l++) {
+            if(count[l]!=0)divPoint(centroideTmp[l],count[l]);
+        }
+        centroide=centroideTmp;
         std::cout<<change<<endl;
     }
-     for(int l=0;l<k;l++){
-        std::cout << "Centroide " << l+1 << ": x = " << centroide[l].x << ", y = " << centroide[l].y
-         << ", L = " << centroide[l].L << ", a = " << centroide[l].a << ", b = " << centroide[l].b << endl;
-    }
-    color(ImgIn,ImgOut,nH,nW,classe);
+    //color(ImgIn,ImgOut,nH,nW,classe);
+    color2(ImgIn,ImgOut,nH,nW,classe,centroide);
 }
 
 int main(int argc, char* argv[])
@@ -257,9 +266,9 @@ int main(int argc, char* argv[])
     allocation_tableau(ImgOut, OCTET, 3*nTaille);
     lire_image_ppm(cNomImgLue, ImgIn, nH * nW);
     lire_image_ppm(cNomImgLue, ImgOut, nH * nW);
-    convert_rgb_to_lab(ImgIn,ImgConv,nTaille);
-    ecrire_image_ppm(cNomImgConv, ImgConv,  nH, nW);
-    slic(ImgConv,ImgOut,nH,nW,k,s);
+    //convert_rgb_to_lab(ImgIn,ImgConv,nTaille);
+    //ecrire_image_ppm(cNomImgConv, ImgConv,  nH, nW);
+    slic(ImgIn,ImgOut,nH,nW,k,s);
     ecrire_image_ppm(cNomImgOut, ImgOut,  nH, nW);
     free(ImgIn);
     free(ImgConv);
