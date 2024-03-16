@@ -1,61 +1,13 @@
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
-#include "image_ppm.h"
 #include <cmath>
 #include <vector>
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h" // Inclure le fichier d'en-tête stb_image.h
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
 using namespace std;
-
-
-void convert_rgb_to_lab(OCTET *ImgIn, OCTET *ImgLab, int nTaille) {
-    double var_R, var_G, var_B, X, Y, Z, f_X, f_Y, f_Z;
-    double var_X, var_Y, var_Z, L, a, b;
-    double ref_X = 95.047; 
-    double ref_Y = 100.000;
-    double ref_Z = 108.883;
-    double epsilon = 0.008856; 
-    double kappa = 903.3; 
-
-    for (int i = 0; i < nTaille; i++) {
-        var_R = (double)ImgIn[3*i] / 255.0; 
-        var_G = (double)ImgIn[3*i + 1] / 255.0; 
-        var_B = (double)ImgIn[3*i + 2] / 255.0; 
-
-        if (var_R > 0.04045) var_R = pow((var_R + 0.055) / 1.055, 2.4);
-        else var_R = var_R / 12.92;
-        if (var_G > 0.04045) var_G = pow((var_G + 0.055) / 1.055, 2.4);
-        else var_G = var_G / 12.92;
-        if (var_B > 0.04045) var_B = pow((var_B + 0.055) / 1.055, 2.4);
-        else var_B = var_B / 12.92;
-
-        var_R = var_R * 100.0;
-        var_G = var_G * 100.0;
-        var_B = var_B * 100.0;
-
-        X = var_R * 0.4124564 + var_G * 0.3575761 + var_B * 0.1804375;
-        Y = var_R * 0.2126729 + var_G * 0.7151522 + var_B * 0.0721750;
-        Z = var_R * 0.0193339 + var_G * 0.1191920 + var_B * 0.9503041;
-
-        var_X = X / ref_X;
-        var_Y = Y / ref_Y;
-        var_Z = Z / ref_Z;
-
-        if (var_X > epsilon) f_X = pow(var_X, 1.0 / 3.0);
-        else f_X = (kappa * var_X + 16.0) / 116.0;
-        if (var_Y > epsilon) f_Y = pow(var_Y, 1.0 / 3.0);
-        else f_Y = (kappa * var_Y + 16.0) / 116.0;
-        if (var_Z > epsilon) f_Z = pow(var_Z, 1.0 / 3.0);
-        else f_Z = (kappa * var_Z + 16.0) / 116.0;
-
-        L = (116.0 * f_Y) - 16.0;
-        a = 500.0 * (f_X - f_Y);
-        b = 200.0 * (f_Y - f_Z);
-
-        ImgLab[3*i] = (OCTET)(2.55 * L); 
-        ImgLab[3*i + 1] = (OCTET)(a + 128); 
-        ImgLab[3*i + 2] = (OCTET)(b + 128); 
-    }
-}
 
 
 
@@ -90,7 +42,7 @@ float distanceEuclidienne(Point p1, Point p2) {//Potentiellement mettre des poid
     float distanceLab=sqrt(pow(p2.L-p1.L,2)+pow(p2.a-p1.a,2)+pow(p2.b-p1.b,2));
     return distanceXY+distanceLab;
 }
-void generateCentroidsGrid(vector<Point>& centroids, int nH, int nW, int k,OCTET* ImgIn) {
+void generateCentroidsGrid(vector<Point>& centroids, int nH, int nW, int k,unsigned char* ImgIn) {
     int gridSize = ceil(sqrt(k)); //grille carrée
     int cellWidth = nW / gridSize;
     int cellHeight = nH / gridSize;
@@ -103,7 +55,7 @@ void generateCentroidsGrid(vector<Point>& centroids, int nH, int nW, int k,OCTET
         }
     }
 }
-void color(OCTET *ImgIn, OCTET *ImgOut, int nH, int nW, vector<int> classe){
+void color(unsigned char *ImgIn, unsigned char *ImgOut, int nH, int nW, vector<int> classe){ 
     for(int i=0;i<nW-1;i++){
         for(int j=0;j<nH-1;j++){
             int k = classe[j*nW+i];
@@ -130,7 +82,7 @@ void color(OCTET *ImgIn, OCTET *ImgOut, int nH, int nW, vector<int> classe){
     }
 }
 
-void color2(OCTET *ImgIn, OCTET *ImgOut, int nH, int nW, vector<int> classe,vector<Point> centroide){
+void color2(unsigned char *ImgIn, unsigned char *ImgOut, int nH, int nW, vector<int> classe,vector<Point> centroide){
     for(int i=0;i<nW;i++){
         for(int j=0;j<nH;j++){
             int k = classe[j*nW+i];
@@ -141,7 +93,7 @@ void color2(OCTET *ImgIn, OCTET *ImgOut, int nH, int nW, vector<int> classe,vect
     }
 }
 //Seuil utilisé est sur le nombre de changement de classe de pixel a chaque itération.
-void slic(OCTET *ImgIn, OCTET *ImgOut,int nH,int nW,int k,int seuil){
+void slic(unsigned char *ImgIn, unsigned char *ImgOut,int nH,int nW,int k,int seuil){
     vector<Point> centroide;
     vector<Point> centroideTmp(k);
     //ordre des boucles importants que ce soit le même a chaque fois pour ordre dans classe
@@ -240,38 +192,35 @@ void slic(OCTET *ImgIn, OCTET *ImgOut,int nH,int nW,int k,int seuil){
 
 int main(int argc, char* argv[])
 {
-    char cNomImgLue[250], cNomImgConv[250],cNomImgOut[250];
+    char cNomImgLue[250],cNomImgOut[250];
     int nH, nW, nTaille,k,s;
   
-    if (argc != 6) 
+    if (argc != 5) 
         {
         printf("Usage: ImageIn.ppm ImageConv.ppm ImgOut.ppm k s\n"); 
         exit (1) ;
         }
 
     sscanf (argv[1],"%s",cNomImgLue) ;
-    sscanf (argv[2],"%s",cNomImgConv);
-    sscanf (argv[3],"%s",cNomImgOut);
-    sscanf (argv[4],"%d",&k);
-    sscanf (argv[5],"%d",&s);
+    sscanf (argv[2],"%s",cNomImgOut);
+    sscanf (argv[3],"%d",&k);
+    sscanf (argv[4],"%d",&s);
 
 
-    OCTET *ImgIn, *ImgConv,*ImgOut;
-
-    lire_nb_lignes_colonnes_image_ppm(cNomImgLue, &nH, &nW);
+    unsigned char *ImgIn, *ImgConv,*ImgOut;
+    int channels;
+    ImgIn = stbi_load(cNomImgLue, &nW, &nH, &channels, STBI_rgb);
+    if (ImgIn == NULL) {
+        std::cerr << "Erreur lors du chargement des images." << std::endl;
+        return 1;
+    }
     nTaille = nH * nW;
+    ImgOut = (unsigned char *)malloc(3 * nTaille * sizeof(unsigned char));
 
-    allocation_tableau(ImgIn, OCTET, 3*nTaille);
-    allocation_tableau(ImgConv, OCTET, 3*nTaille);
-    allocation_tableau(ImgOut, OCTET, 3*nTaille);
-    lire_image_ppm(cNomImgLue, ImgIn, nH * nW);
-    lire_image_ppm(cNomImgLue, ImgOut, nH * nW);
-    //convert_rgb_to_lab(ImgIn,ImgConv,nTaille);
-    //ecrire_image_ppm(cNomImgConv, ImgConv,  nH, nW);
+  
     slic(ImgIn,ImgOut,nH,nW,k,s);
-    ecrire_image_ppm(cNomImgOut, ImgOut,  nH, nW);
-    free(ImgIn);
-    free(ImgConv);
+    stbi_write_png(cNomImgOut, nW, nH, 3, ImgOut, nW * 3);
+    stbi_image_free(ImgIn);
     free(ImgOut);
     return 1;
 }
