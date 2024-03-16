@@ -23,6 +23,7 @@ struct Component {
 };
 
 void felzenszwalb(std::uint8_t* inputImage, std::uint8_t* outputImage, int width, int height, double c) {
+    c /= 255.0;
 
     // Initialisation
     // Calcul des poids des pixels et création des components (où chaque pixel est son propre component)
@@ -151,7 +152,7 @@ void felzenszwalb(std::uint8_t* inputImage, std::uint8_t* outputImage, int width
 
 int main(int argc, const char** argv) {
     if (argc < 4) {
-        std::cout << "Usage :\n  - Image d'entrée\n  - Image de sortie\n  - Seuil k (15.0 par exemple)\n";
+        std::cout << "Usage :\n  - Image d'entrée\n  - Image de sortie\n  - Seuil k (300.0 par exemple)\n";
         return 0;
     }
 

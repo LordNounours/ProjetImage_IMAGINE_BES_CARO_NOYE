@@ -37,8 +37,9 @@ double parzenDensity(colorm::Lab* colorMap, int width, int height, int x, int y,
                 double da{colorMap[posPixel].a() - colorMap[posNeighbor].a()};
                 double db{colorMap[posPixel].b() - colorMap[posNeighbor].b()};
                 double exponent{(dx * dx + dy * dy + dL * dL + da * da + db * db) * denom};
-                double a{0.66666 * exponent + 1.0};
-                density += 2.0 / (1.0 + a * a * a); // Approximation de std::exp
+                double a{0.465 * exponent + 1.0};
+                double a2{a * a};
+                density += 2.0 / (1.0 + a2 * a2); // Approximation de std::exp(-x) pour x >= 0
             }
         }
     }
