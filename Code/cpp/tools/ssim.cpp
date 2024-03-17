@@ -1,12 +1,14 @@
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
-#include "image_ppm.h"
 #include <cmath>
 #include <vector>
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h" // Inclure le fichier d'en-tête stb_image.h
+
 using namespace std;
 
-void ssim(OCTET *ImgIn, OCTET *ImgIn2, int nH, int nW) {
+void ssim(unsigned char *ImgIn, unsigned char *ImgIn2, int nH, int nW) {
     double k1 = 0.01;
     double k2 = 0.03;
     int L = 255;
@@ -16,7 +18,7 @@ void ssim(OCTET *ImgIn, OCTET *ImgIn2, int nH, int nW) {
     double ssim[3] = {0};
     int count = 0;
 
-    //Fenetre de 8 par 8
+    // Fenetre de 8 par 8
     for (int i = 0; i < nH - 8; i += 2) {
         for (int j = 0; j < nW - 8; j += 2) {
             count++;
@@ -68,33 +70,33 @@ void ssim(OCTET *ImgIn, OCTET *ImgIn2, int nH, int nW) {
     std::cout << "SSIM moyen entre 2 images : " << ssimf << std::endl;
 }
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char *argv[]) {
     char cNomImgIn[250], cNomImgIn2[250];
     int nH, nW, nTaille;
-  
-    if (argc != 3) 
-        {
-        printf("Usage: ImageIn.ppm ImageIn2.ppm \n"); 
-        exit (1) ;
-        }
 
-    sscanf (argv[1],"%s",cNomImgIn) ;
-    sscanf (argv[2],"%s",cNomImgIn2);
-    
+    if (argc != 3) {
+        printf("Usage: ImageIn.ppm ImageIn2.ppm \n");
+        exit(1);
+    }
 
+    sscanf(argv[1], "%s", cNomImgIn);
+    sscanf(argv[2], "%s", cNomImgIn2);
 
-    OCTET *ImgIn, *ImgIn2;
+    unsigned char *ImgIn, *ImgIn2;
 
-    lire_nb_lignes_colonnes_image_ppm(cNomImgIn, &nH, &nW);
-    nTaille = nH * nW;
+    // Charger les images avec stbi_load
+    ImgIn = stbi_load(cNomImgIn, &nW, &nH, NULL, 3);
+    ImgIn2 = stbi_load(cNomImgIn2, &nW, &nH, NULL, 3);
 
-    allocation_tableau(ImgIn, OCTET, 3*nTaille);
-    allocation_tableau(ImgIn2, OCTET, 3*nTaille);
-    lire_image_ppm(cNomImgIn, ImgIn, nH * nW);
-    lire_image_ppm(cNomImgIn2, ImgIn2, nH * nW);
-    ssim(ImgIn,ImgIn2,nH,nW);
-    free(ImgIn);
-    free(ImgIn2);
-    return 1;
+    if (ImgIn == NULL || ImgIn2 == NULL) {
+        std::cerr << "Erreur lors du chargement des images." << std::endl;
+        return 1;
+    }
+
+    ssim(ImgIn, ImgIn2, nH, nW);
+
+    stbi_image_free(ImgIn);
+    stbi_image_free(ImgIn2);
+
+    return 0;
 }
