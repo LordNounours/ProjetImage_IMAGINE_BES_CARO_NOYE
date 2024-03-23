@@ -37,32 +37,6 @@ void compression(std::uint8_t* inputImage, sul::dynamic_bitset<>& outputData, in
         };
     }
 
-    /*for (int i{}; i < width; ++i) {
-        for (int j{}; j < height; ++j) {
-
-            int position{i + j * width};
-            Region* current{pixelRegions[position]};
-
-            if (i < width - 1) {
-                Region* next{pixelRegions[position + 1]};
-                if (current != next && current->r == next->r && current->g == next->g && current->b == next->b) {
-                    current->pixels.insert(current->pixels.end(), next->pixels.begin(), next->pixels.end());
-                    pixelRegions[position + 1] = current;
-                    delete next;
-                }
-            }
-
-            if (j < height - 1) {
-                Region* next{pixelRegions[position + width]};
-                if (current != next && current->r == next->r && current->g == next->g && current->b == next->b) {
-                    current->pixels.insert(current->pixels.end(), next->pixels.begin(), next->pixels.end());
-                    pixelRegions[position + width] = current;
-                    delete next;
-                }
-            }
-        }
-    }*/
-
     for (int i{}; i < width - 1; ++i) {
         for (int j{}; j < height; ++j) {
             int position{i + j * width};
@@ -82,11 +56,8 @@ void compression(std::uint8_t* inputImage, sul::dynamic_bitset<>& outputData, in
             int position{i + j * width};
             Region* current{pixelRegions[position]};
             Region* next{pixelRegions[position + width]};
-            if (current == next) {
-                continue;
-            }
 
-            if (current->r == next->r && current->g == next->g && current->b == next->b) {
+            if (current != next && current->r == next->r && current->g == next->g && current->b == next->b) {
                 current->pixels.insert(current->pixels.end(), next->pixels.begin(), next->pixels.end());
                 for (int pixel : next->pixels) {
                     pixelRegions[pixel] = current;
