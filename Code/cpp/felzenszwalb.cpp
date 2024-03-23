@@ -15,6 +15,7 @@
 #include <map>
 #include <algorithm>
 #include <string>
+#include <set>
 
 struct Component {
     std::vector<int> pixels;
@@ -173,6 +174,14 @@ void felzenszwalb(std::uint8_t* inputImage, std::uint8_t* outputImage, int width
         outputImage[3 * i] = static_cast<std::uint8_t>(std::round(rgbColor.red()));
         outputImage[3 * i + 1] = static_cast<std::uint8_t>(std::round(rgbColor.green()));
         outputImage[3 * i + 2] = static_cast<std::uint8_t>(std::round(rgbColor.blue()));
+    }
+
+    std::set<Component*> componentSet;
+    for (int i{}; i < width * height; ++i) {
+        if (componentSet.find(componentMap[i]) == componentSet.end()) {
+            componentSet.insert(componentMap[i]);
+            delete componentMap[i];
+        }
     }
 
 }
