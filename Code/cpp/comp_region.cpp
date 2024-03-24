@@ -123,6 +123,7 @@ int main(int argc, const char** argv) {
     std::size_t currentSize{outputData.size()};
     std::cout << "Taille (non compressée) : " << previousSize << " bits\n";
     std::cout << "Taille (compressée) : " << currentSize << " bits\n";
+    std::cout << "Débit : " << static_cast<double>(currentSize) / (width * height) << " bits/pixel\n";
     std::cout << "Taux de compression : " << static_cast<double>(previousSize) / currentSize << '\n';
 
     stbi_image_free(inputImage);
