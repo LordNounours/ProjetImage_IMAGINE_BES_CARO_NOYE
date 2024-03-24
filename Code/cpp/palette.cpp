@@ -19,14 +19,14 @@ struct Point {
     bool operator==(const Point& other) const {
         return r == other.r && g == other.g && b == other.b;
     }
-     bool operator<(const Point& other) const {
-        if (r != other.r)
-            return r < other.r;
-        if (g != other.g)
-            return g < other.g;
-        return b < other.b;
-    }
 };
+
+
+double distance(const Point& p1, const Point& p2) {
+    return std::sqrt((p1.r - p2.r) * (p1.r - p2.r) +
+                     (p1.g - p2.g) * (p1.g - p2.g) +
+                     (p1.b - p2.b) * (p1.b - p2.b));
+}
 
 std::vector<Point> creerPalette(unsigned char *ImgSeg, int nH, int nW) {
     std::vector<Point> palette;
@@ -50,38 +50,76 @@ std::vector<Point> creerPalette(unsigned char *ImgSeg, int nH, int nW) {
 }
 
 void compresserImage(unsigned char *ImgIn, unsigned char *ImgOut, int nH, int nW, const std::vector<Point>& palette) {
-    std::map<Point, int> paletteIndexMap;
-    for (std::size_t i = 0; i < palette.size(); ++i) {
-        paletteIndexMap[palette[i]] = i;
+    std::vector<int> indicePalette;
+    for(int i = 0; i < palette.size(); i++) {
+        indicePalette.push_back(i);
     }
     for (std::size_t i = 0; i < nH; i++) {
         for (std::size_t j = 0; j < nW; j++) {
             Point pixel = {ImgIn[(i * nW + j) * 3], ImgIn[(i * nW + j) * 3 + 1], ImgIn[(i * nW + j) * 3 + 2]};
-            int index = paletteIndexMap[pixel];
-            ImgOut[i * nW + j] = index;
+            double minDistance = std::numeric_limits<double>::max();
+            int indiceMinDistance = -1;
+            for(int k = 0; k < palette.size(); k++) {
+                double dist = distance(pixel, palette[k]);
+                if (dist < minDistance) {
+                    minDistance = dist;
+                    indiceMinDistance = k;
+                }
+            }
+            if (indiceMinDistance != -1) {
+                ImgOut[i * nW + j] = indicePalette[indiceMinDistance];
+            } else {
+                std::cerr << "Pixel non trouvé dans la palette." << std::endl;
+            }
         }
     }
 }
 
-void compression(unsigned char *ImgIn, unsigned char *ImgSeg, unsigned char *ImgOut, int nH, int nW) {
-    std::vector<Point> palette = creerPalette(ImgSeg, nH, nW);
-    compresserImage(ImgIn, ImgOut, nH, nW, palette);
+
+
+
+void decompresserImage(unsigned char *ImgIn, unsigned char *ImgOut, int nH, int nW, const std::vector<Point>& palette) {
+    for (std::size_t i = 0; i < nH; i++) {
+        for (std::size_t j = 0; j < nW; j++) {
+            int index = ImgIn[i * nW + j];
+            ImgOut[(i * nW + j) * 3] = palette[index].r; 
+            ImgOut[(i * nW + j) * 3 + 1] = palette[index].g; 
+            ImgOut[(i * nW + j) * 3 + 2] = palette[index].b; 
+        }
+    }
 }
 
+
+
+void decompression(unsigned char *ImgIn, unsigned char *ImgOut, int nH, int nW, const std::vector<Point>& palette) {
+    decompresserImage(ImgIn, ImgOut, nH, nW, palette);
+}
+
+void compression(unsigned char *ImgIn, unsigned char *ImgSeg, unsigned char *ImgOut,unsigned char* ImgDec, int nH, int nW) {
+    std::vector<Point> palette = creerPalette(ImgSeg, nH, nW);
+    for (const Point& p : palette) {
+        std::cout << "Couleur : (" << p.r << ", " << p.g << ", " << p.b << ")" << std::endl;
+    }
+    compresserImage(ImgIn, ImgOut, nH, nW, palette);
+    decompression(ImgOut,ImgDec,nH,nW,palette);
+}
+
+
 int main(int argc, char* argv[]) {
-    char cNomImg[250], cNomImgSeg[250], cNomImgOut[250];
+    char cNomImg[250], cNomImgSeg[250], cNomImgComp[250], cNomImgDec[250];
     int nH, nW, nTaille;
 
-    if (argc != 4) {
+    if (argc != 5) {
         printf("Usage: ImageIn.ppm ImageConv.ppm ImgOut.ppm k s\n");
         exit(1);
     }
 
     sscanf(argv[1], "%s", cNomImg);
     sscanf(argv[2], "%s", cNomImgSeg);
-    sscanf(argv[3], "%s", cNomImgOut);
+    sscanf(argv[3], "%s", cNomImgComp);
+    sscanf(argv[4], "%s", cNomImgDec);
 
-    unsigned char *ImgIn, *ImgSeg, *ImgOut;
+    unsigned char *ImgIn, *ImgSeg, *ImgComp,*ImgDec;
     int channels;
     ImgIn = stbi_load(cNomImg, &nW, &nH, &channels, STBI_rgb);
     if (ImgIn == NULL) {
@@ -94,12 +132,15 @@ int main(int argc, char* argv[]) {
         std::cerr << "Erreur lors du chargement de l'image " << cNomImgSeg << std::endl;
         return 1;
     }
-    ImgOut = (unsigned char *)malloc(nTaille * sizeof(unsigned char));
-    compression(ImgIn, ImgSeg, ImgOut, nH, nW);
+    ImgComp = (unsigned char *)malloc(nTaille * sizeof(unsigned char));
+    ImgDec = (unsigned char *)malloc(nTaille * 3 * sizeof(unsigned char));
+    compression(ImgIn, ImgSeg, ImgComp,ImgDec, nH, nW);
 
-    stbi_write_png(cNomImgOut, nW, nH, 1, ImgOut, nW);
+    stbi_write_png(cNomImgComp, nW, nH, 1, ImgComp, nW);
+    stbi_write_png(cNomImgDec, nW, nH, 3, ImgDec, nW);
     stbi_image_free(ImgIn);
     stbi_image_free(ImgSeg);
-    free(ImgOut);
+    free(ImgComp);
+    free(ImgDec);
     return 0;
 }
