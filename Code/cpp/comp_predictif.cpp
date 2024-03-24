@@ -19,7 +19,7 @@ void pushBitset(sul::dynamic_bitset<>& bitset, unsigned value, unsigned bits) {
     }
 }
 
-void compression(std::uint8_t* inputImage, std::uint8_t* predictedImage, sul::dynamic_bitset<>& outputData, int width, int height) {
+void compression(std::uint8_t* inputImage, std::uint8_t* predictedImage, sul::dynamic_bitset<>& outputData, int width, int height, int method) {
     predictedImage[0] = inputImage[0];
     predictedImage[1] = inputImage[1];
     predictedImage[2] = inputImage[2];
@@ -32,17 +32,39 @@ void compression(std::uint8_t* inputImage, std::uint8_t* predictedImage, sul::dy
                     if (j == 0) {
                         continue;
                     }
-                    int a{inputImage[3 * (position - width) + k]};
-                    predictedImage[3 * position + k] = static_cast<std::uint8_t>(std::clamp(p - a + 128, 0, 255));
+                    int x{inputImage[3 * (position - width) + k]};
+                    predictedImage[3 * position + k] = static_cast<std::uint8_t>(std::clamp(p - x + 128, 0, 255));
                 }
                 else if (j == 0) {
-                    int b{inputImage[3 * (position - 1) + k]};
-                    predictedImage[3 * position + k] = static_cast<std::uint8_t>(std::clamp(p - b + 128, 0, 255));
+                    int x{inputImage[3 * (position - 1) + k]};
+                    predictedImage[3 * position + k] = static_cast<std::uint8_t>(std::clamp(p - x + 128, 0, 255));
                 }
                 else {
-                    int a{inputImage[3 * (position - width) + k]};
-                    int b{inputImage[3 * (position - 1) + k]};
-                    predictedImage[3 * position + k] = static_cast<std::uint8_t>(std::clamp(p - (a + b) / 2 + 128, 0, 255));
+                    int a{inputImage[3 * (position - width - 1) + k]};
+                    int b{inputImage[3 * (position - width) + k]};
+                    int c{inputImage[3 * (position - 1) + k]};
+                    switch (method) {
+                        default:
+                        case 0:
+                            predictedImage[3 * position + k] = static_cast<std::uint8_t>(std::clamp(p - (b + c) / 2 + 128, 0, 255));
+                            break;
+                        // DPCM
+                        case 1:
+                            predictedImage[3 * position + k] = static_cast<std::uint8_t>(std::clamp(p - (b + c - a) + 128, 0, 255));
+                            break;
+                        // MED
+                        case 2:
+                            if (a >= std::max(b, c)) {
+                                predictedImage[3 * position + k] = static_cast<std::uint8_t>(std::clamp(p - std::min(b, c) + 128, 0, 255));
+                            }
+                            else if (a <= std::min(b, c)) {
+                                predictedImage[3 * position + k] = static_cast<std::uint8_t>(std::clamp(p - std::max(b, c) + 128, 0, 255));
+                            }
+                            else {
+                                predictedImage[3 * position + k] = static_cast<std::uint8_t>(std::clamp(p - (b + c - a) + 128, 0, 255));
+                            }
+                            break;
+                    }                    
                 }
             }
         }
@@ -94,8 +116,8 @@ void compression(std::uint8_t* inputImage, std::uint8_t* predictedImage, sul::dy
 }
 
 int main(int argc, const char** argv) {
-    if (argc < 3) {
-        std::cout << "Usage :\n  - Image d'entrée\n  - Image prédite\n";
+    if (argc < 4) {
+        std::cout << "Usage :\n  - Image d'entrée\n  - Image prédite\n  - Méthode (0 : Moyenne, 2 : DPCM, 3 : MED (meilleure))\n";
         return 0;
     }
 
@@ -107,12 +129,13 @@ int main(int argc, const char** argv) {
     std::uint8_t* predictedImage = new std::uint8_t[3 * width * height];
     sul::dynamic_bitset outputData;
     
-    compression(inputImage, predictedImage, outputData, width, height);
+    compression(inputImage, predictedImage, outputData, width, height, std::atoi(argv[3]));
 
     std::size_t previousSize{24ull * width * height};
     std::size_t currentSize{outputData.size()};
     std::cout << "Taille (non compressée) : " << previousSize << " bits\n";
     std::cout << "Taille (compressée) : " << currentSize << " bits\n";
+    std::cout << "Débit : " << static_cast<double>(currentSize) / (width * height) << " bits/pixel\n";
     std::cout << "Taux de compression : " << static_cast<double>(previousSize) / currentSize << '\n';
 
     stbi_write_png(argv[2], width, height, STBI_rgb, predictedImage, 3 * width);
