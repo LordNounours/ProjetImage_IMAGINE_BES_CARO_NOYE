@@ -136,8 +136,8 @@ int main(int argc, char* argv[]) {
     ImgDec = (unsigned char *)malloc(nTaille * 3 * sizeof(unsigned char));
     compression(ImgIn, ImgSeg, ImgComp,ImgDec, nH, nW);
 
-    stbi_write_png(cNomImgComp, nW, nH, 1, ImgComp, nW);
-    stbi_write_png(cNomImgDec, nW, nH, 3, ImgDec, nW);
+    stbi_write_png(cNomImgComp, nW, nH, 1, ImgComp, 0);
+    stbi_write_png(cNomImgDec, nW, nH, 3, ImgDec, 0 );
     stbi_image_free(ImgIn);
     stbi_image_free(ImgSeg);
     free(ImgComp);
