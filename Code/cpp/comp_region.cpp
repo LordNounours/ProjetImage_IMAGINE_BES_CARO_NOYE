@@ -1,6 +1,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
 #include "dynamic_bitset.hpp"
 
 #include <vector>
@@ -24,7 +27,7 @@ struct Region {
     std::vector<int> pixels;
 };
 
-void compression(std::uint8_t* inputImage, sul::dynamic_bitset<>& outputData, int width, int height) {
+void compression(std::uint8_t* inputImage, std::uint8_t* edgeImage, sul::dynamic_bitset<>& outputData, int width, int height) {
     int positionBits{static_cast<int>(std::ceil(std::log(width * height)))};
 
     std::vector<Region*> pixelRegions(width * height);
@@ -74,9 +77,15 @@ void compression(std::uint8_t* inputImage, sul::dynamic_bitset<>& outputData, in
             int position{i + j * width};
             if (i > 0 && j > 0 && i < width && j < width && pixelRegions[position - 1] == pixelRegions[position] && pixelRegions[position + 1] == pixelRegions[position] && pixelRegions[position - width] == pixelRegions[position] && pixelRegions[position + width] == pixelRegions[position]) {
                 edgeMap[position] = false;
+                for (int k{}; k < 3; ++k) {
+                    edgeImage[3 * position + k] = 0;
+                }
             }
             else {
                 edgeMap[position] = true;
+                for (int k{}; k < 3; ++k) {
+                    edgeImage[3 * position + k] = inputImage[3 * position + k];
+                }
                 regions.insert(pixelRegions[position]);
             }
         }
@@ -105,8 +114,8 @@ void compression(std::uint8_t* inputImage, sul::dynamic_bitset<>& outputData, in
 }
 
 int main(int argc, const char** argv) {
-    if (argc < 2) {
-        std::cout << "Usage :\n  - Image d'entrée\n";
+    if (argc < 3) {
+        std::cout << "Usage :\n  - Image d'entrée\n  - Image contours\n";
         return 0;
     }
 
@@ -115,9 +124,10 @@ int main(int argc, const char** argv) {
     int channelsCount;
     std::uint8_t* inputImage{stbi_load(argv[1], &width, &height, &channelsCount, STBI_rgb)};
 
+    std::uint8_t* edgeImage = new std::uint8_t[3 * width * height];
     sul::dynamic_bitset outputData;
     
-    compression(inputImage, outputData, width, height);
+    compression(inputImage, edgeImage, outputData, width, height);
 
     std::size_t previousSize{24ull * width * height};
     std::size_t currentSize{outputData.size()};
@@ -126,5 +136,8 @@ int main(int argc, const char** argv) {
     std::cout << "Débit : " << static_cast<double>(currentSize) / (width * height) << " bits/pixel\n";
     std::cout << "Taux de compression : " << static_cast<double>(previousSize) / currentSize << '\n';
 
+    stbi_write_png(argv[2], width, height, STBI_rgb, edgeImage, 3 * width);
+
+    delete[] edgeImage;
     stbi_image_free(inputImage);
 }
