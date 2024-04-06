@@ -5,7 +5,7 @@
 //    cmake ..
 //    make
 //    sudo make install (optional) <- faire cette ligne
-//compilation les bougs : g++ testfltk.cpp -o test -I/../fltk/build/FL -L/../fltk/build/lib -lfltk -lX11 -ldl -lm -lpthread -lXext -lXinerama -lXcursor -lXfixes -lXrender -lfontconfig -lXft
+//compilation les bougs : g++ testfltk.cpp -o ../bin/test -I/../fltk/build/FL -L/../fltk/build/lib -lfltk -lX11 -ldl -lm -lpthread -lXext -lXinerama -lXcursor -lXfixes -lXrender -lfontconfig -lXft
 
 int main(int argc, char **argv) {
     Fl_Window *window = new Fl_Window(340, 180);
