@@ -1,0 +1,107 @@
+Determining if files alsa/asoundlib.h exist failed with the following output:
+Change Dir: /home/thomas/Bureau/ProjetImage/ProjetImage_IMAGINE_BES_CARO_NOYE/Code/fltk/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_8118d/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_8118d.dir/build.make CMakeFiles/cmTC_8118d.dir/build
+gmake[1] : on entre dans le répertoire « /home/thomas/Bureau/ProjetImage/ProjetImage_IMAGINE_BES_CARO_NOYE/Code/fltk/build/CMakeFiles/CMakeTmp »
+Building C object CMakeFiles/cmTC_8118d.dir/HAVE_ALSA_ASOUNDLIB_H.c.o
+/usr/bin/cc    -o CMakeFiles/cmTC_8118d.dir/HAVE_ALSA_ASOUNDLIB_H.c.o -c /home/thomas/Bureau/ProjetImage/ProjetImage_IMAGINE_BES_CARO_NOYE/Code/fltk/build/CMakeFiles/CheckIncludeFiles/HAVE_ALSA_ASOUNDLIB_H.c
+/home/thomas/Bureau/ProjetImage/ProjetImage_IMAGINE_BES_CARO_NOYE/Code/fltk/build/CMakeFiles/CheckIncludeFiles/HAVE_ALSA_ASOUNDLIB_H.c:2:10: fatal error: alsa/asoundlib.h: Aucun fichier ou dossier de ce type
+    2 | #include <alsa/asoundlib.h>
+      |          ^~~~~~~~~~~~~~~~~~
+compilation terminated.
+gmake[1]: *** [CMakeFiles/cmTC_8118d.dir/build.make:78 : CMakeFiles/cmTC_8118d.dir/HAVE_ALSA_ASOUNDLIB_H.c.o] Erreur 1
+gmake[1] : on quitte le répertoire « /home/thomas/Bureau/ProjetImage/ProjetImage_IMAGINE_BES_CARO_NOYE/Code/fltk/build/CMakeFiles/CMakeTmp »
+gmake: *** [Makefile:127 : cmTC_8118d/fast] Erreur 2
+
+
+Source:
+/* */
+#include <alsa/asoundlib.h>
+
+
+int main(void){return 0;}
+
+Determining if files OpenGL/glu.h exist failed with the following output:
+Change Dir: /home/thomas/Bureau/ProjetImage/ProjetImage_IMAGINE_BES_CARO_NOYE/Code/fltk/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_5b2d2/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_5b2d2.dir/build.make CMakeFiles/cmTC_5b2d2.dir/build
+gmake[1] : on entre dans le répertoire « /home/thomas/Bureau/ProjetImage/ProjetImage_IMAGINE_BES_CARO_NOYE/Code/fltk/build/CMakeFiles/CMakeTmp »
+Building C object CMakeFiles/cmTC_5b2d2.dir/HAVE_OPENGL_GLU_H.c.o
+/usr/bin/cc    -o CMakeFiles/cmTC_5b2d2.dir/HAVE_OPENGL_GLU_H.c.o -c /home/thomas/Bureau/ProjetImage/ProjetImage_IMAGINE_BES_CARO_NOYE/Code/fltk/build/CMakeFiles/CheckIncludeFiles/HAVE_OPENGL_GLU_H.c
+/home/thomas/Bureau/ProjetImage/ProjetImage_IMAGINE_BES_CARO_NOYE/Code/fltk/build/CMakeFiles/CheckIncludeFiles/HAVE_OPENGL_GLU_H.c:2:10: fatal error: OpenGL/glu.h: Aucun fichier ou dossier de ce type
+    2 | #include <OpenGL/glu.h>
+      |          ^~~~~~~~~~~~~~
+compilation terminated.
+gmake[1]: *** [CMakeFiles/cmTC_5b2d2.dir/build.make:78 : CMakeFiles/cmTC_5b2d2.dir/HAVE_OPENGL_GLU_H.c.o] Erreur 1
+gmake[1] : on quitte le répertoire « /home/thomas/Bureau/ProjetImage/ProjetImage_IMAGINE_BES_CARO_NOYE/Code/fltk/build/CMakeFiles/CMakeTmp »
+gmake: *** [Makefile:127 : cmTC_5b2d2/fast] Erreur 2
+
+
+Source:
+/* */
+#include <OpenGL/glu.h>
+
+
+int main(void){return 0;}
+
+Determining if files sys/stdtypes.h exist failed with the following output:
+Change Dir: /home/thomas/Bureau/ProjetImage/ProjetImage_IMAGINE_BES_CARO_NOYE/Code/fltk/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_92afc/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_92afc.dir/build.make CMakeFiles/cmTC_92afc.dir/build
+gmake[1] : on entre dans le répertoire « /home/thomas/Bureau/ProjetImage/ProjetImage_IMAGINE_BES_CARO_NOYE/Code/fltk/build/CMakeFiles/CMakeTmp »
+Building C object CMakeFiles/cmTC_92afc.dir/HAVE_SYS_STDTYPES_H.c.o
+/usr/bin/cc    -o CMakeFiles/cmTC_92afc.dir/HAVE_SYS_STDTYPES_H.c.o -c /home/thomas/Bureau/ProjetImage/ProjetImage_IMAGINE_BES_CARO_NOYE/Code/fltk/build/CMakeFiles/CheckIncludeFiles/HAVE_SYS_STDTYPES_H.c
+/home/thomas/Bureau/ProjetImage/ProjetImage_IMAGINE_BES_CARO_NOYE/Code/fltk/build/CMakeFiles/CheckIncludeFiles/HAVE_SYS_STDTYPES_H.c:2:10: fatal error: sys/stdtypes.h: Aucun fichier ou dossier de ce type
+    2 | #include <sys/stdtypes.h>
+      |          ^~~~~~~~~~~~~~~~
+compilation terminated.
+gmake[1]: *** [CMakeFiles/cmTC_92afc.dir/build.make:78 : CMakeFiles/cmTC_92afc.dir/HAVE_SYS_STDTYPES_H.c.o] Erreur 1
+gmake[1] : on quitte le répertoire « /home/thomas/Bureau/ProjetImage/ProjetImage_IMAGINE_BES_CARO_NOYE/Code/fltk/build/CMakeFiles/CMakeTmp »
+gmake: *** [Makefile:127 : cmTC_92afc/fast] Erreur 2
+
+
+Source:
+/* */
+#include <sys/stdtypes.h>
+
+
+int main(void){return 0;}
+
+Determining if the function strlcat exists failed with the following output:
+Change Dir: /home/thomas/Bureau/ProjetImage/ProjetImage_IMAGINE_BES_CARO_NOYE/Code/fltk/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_50973/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_50973.dir/build.make CMakeFiles/cmTC_50973.dir/build
+gmake[1] : on entre dans le répertoire « /home/thomas/Bureau/ProjetImage/ProjetImage_IMAGINE_BES_CARO_NOYE/Code/fltk/build/CMakeFiles/CMakeTmp »
+Building C object CMakeFiles/cmTC_50973.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=strlcat -o CMakeFiles/cmTC_50973.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_50973
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_50973.dir/link.txt --verbose=1
+/usr/bin/cc  -DCHECK_FUNCTION_EXISTS=strlcat CMakeFiles/cmTC_50973.dir/CheckFunctionExists.c.o -o cmTC_50973 
+/usr/bin/ld : CMakeFiles/cmTC_50973.dir/CheckFunctionExists.c.o : dans la fonction « main » :
+CheckFunctionExists.c:(.text+0x14) : référence indéfinie vers « strlcat »
+collect2: error: ld returned 1 exit status
+gmake[1]: *** [CMakeFiles/cmTC_50973.dir/build.make:99 : cmTC_50973] Erreur 1
+gmake[1] : on quitte le répertoire « /home/thomas/Bureau/ProjetImage/ProjetImage_IMAGINE_BES_CARO_NOYE/Code/fltk/build/CMakeFiles/CMakeTmp »
+gmake: *** [Makefile:127 : cmTC_50973/fast] Erreur 2
+
+
+
+Determining if the function strlcpy exists failed with the following output:
+Change Dir: /home/thomas/Bureau/ProjetImage/ProjetImage_IMAGINE_BES_CARO_NOYE/Code/fltk/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_71761/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_71761.dir/build.make CMakeFiles/cmTC_71761.dir/build
+gmake[1] : on entre dans le répertoire « /home/thomas/Bureau/ProjetImage/ProjetImage_IMAGINE_BES_CARO_NOYE/Code/fltk/build/CMakeFiles/CMakeTmp »
+Building C object CMakeFiles/cmTC_71761.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=strlcpy -o CMakeFiles/cmTC_71761.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_71761
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_71761.dir/link.txt --verbose=1
+/usr/bin/cc  -DCHECK_FUNCTION_EXISTS=strlcpy CMakeFiles/cmTC_71761.dir/CheckFunctionExists.c.o -o cmTC_71761 
+/usr/bin/ld : CMakeFiles/cmTC_71761.dir/CheckFunctionExists.c.o : dans la fonction « main » :
+CheckFunctionExists.c:(.text+0x14) : référence indéfinie vers « strlcpy »
+collect2: error: ld returned 1 exit status
+gmake[1]: *** [CMakeFiles/cmTC_71761.dir/build.make:99 : cmTC_71761] Erreur 1
+gmake[1] : on quitte le répertoire « /home/thomas/Bureau/ProjetImage/ProjetImage_IMAGINE_BES_CARO_NOYE/Code/fltk/build/CMakeFiles/CMakeTmp »
+gmake: *** [Makefile:127 : cmTC_71761/fast] Erreur 2
+
+
+
