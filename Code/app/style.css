@@ -1,0 +1,16 @@
+#inputImage {
+    cursor: pointer;
+    transition-duration: 200ms;
+}
+
+#inputImage:hover {
+    filter: brightness(120%);
+}
+
+.sectionDelimiter {
+    border-width: 2px;
+}
+
+.metric {
+    font-size: 1.5em;
+}

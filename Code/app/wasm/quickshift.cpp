@@ -1,7 +1,6 @@
-
 #include <iostream>
 
-#include "../colorm.h"
+#include "colorm.h"
 
 #include <stack>
 #include <cstdint>
@@ -67,6 +66,7 @@ int findFittingNeighbor(double* densityMap, colorm::Lab* colorMap, int width, in
 
 extern "C" {
     void quickShift(std::uint8_t* inputImage, std::uint8_t* outputImage, int width, int height, double sigma, int kernelSize) {
+        std::cout << (int) inputImage[0] << '\n';
         std::vector<colorm::Lab> colorMap(width * height);
         std::vector<Node*> nodeMap(width * height);
 
@@ -121,4 +121,4 @@ extern "C" {
     }
 }
 
-// em++ -O3 -s WASM=1 -s EXPORTED_FUNCTIONS='["_quickShift"]' --no-entry quickshift.cpp -o quickshift.wasm
+// em++ -O3 -s WASM=1 -s EXPORTED_FUNCTIONS='["_malloc", "_free", "_quickShift"]' --no-entry quickshift.cpp -o quickshift.js -s TOTAL_MEMORY=256MB
