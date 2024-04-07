@@ -1,4 +1,4 @@
-#inputImage {
+#inputImage, #inputNoneBox {
     cursor: pointer;
     transition-duration: 200ms;
 }
@@ -7,10 +7,20 @@
     filter: brightness(120%);
 }
 
+#inputNoneBox:hover {
+    filter: brightness(105%);
+}
+
 .sectionDelimiter {
     border-width: 2px;
 }
 
 .metric {
     font-size: 1.5em;
+}
+
+.imageNone {
+    width: 100%;
+    min-height: 160px;
+    background-color: lightgray;
 }
