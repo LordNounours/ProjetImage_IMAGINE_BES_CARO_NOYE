@@ -66,7 +66,6 @@ int findFittingNeighbor(double* densityMap, colorm::Lab* colorMap, int width, in
 
 extern "C" {
     void quickShift(std::uint8_t* inputImage, std::uint8_t* outputImage, int width, int height, double sigma, int kernelSize) {
-        std::cout << (int) inputImage[0] << '\n';
         std::vector<colorm::Lab> colorMap(width * height);
         std::vector<Node*> nodeMap(width * height);
 

@@ -72,13 +72,57 @@ function ssim(inputImage, outputImage, width, height) {
     return (ssim[0] + ssim[1] + ssim[2]) / 3;
 }
 
+function putCanvas(canvas, image, alphaImage, width, height) {
+    const context = canvas.getContext("2d");
+    const canvasImage = context.createImageData(width, height);
+    for (let i = 0; i < width * height; ++i) {
+        canvasImage.data[4 * i] = image[3 * i];
+        canvasImage.data[4 * i + 1] = image[3 * i + 1];
+        canvasImage.data[4 * i + 2] = image[3 * i + 2];
+        if (alphaImage !== undefined) {
+            canvasImage.data[4 * i + 3] = alphaImage[4 * i + 3];
+        }
+        else {
+            canvasImage.data[4 * i + 3] = 255;
+        }
+    }
+
+    canvas.width = width;
+    canvas.height = height;
+
+    context.putImageData(canvasImage, 0, 0);
+}
+
+function putSize(sizeElement, unitElement, compElement, size, defaultSize) {
+    const unit = ["o", "Ko", "Mo", "Go", "To"];
+    let i = 0;
+    let scaledSize = size / 8;
+    while (scaledSize > 1000 && i <= 4) {
+        scaledSize /= 1000;
+        ++i;
+    }
+    sizeElement.text(scaledSize.toFixed(2));
+    unitElement.text(unit[i]);
+
+    if (compElement !== null) {
+        const compRate = defaultSize / size;
+        compElement
+            .css("color", "hsl(" + Math.max(0, Math.min(100.0, 50.0 * Math.sqrt(Math.max(1.0, compRate) - 1.0))) + ", 100%, 50%)")
+            .text(compRate.toFixed(3));
+    }
+}
+
 $(() => {
 
     let segmentationMode = 0;
     let imageData;
-    
-    let canvas = $("#outputImage")[0];
-    let context = canvas.getContext("2d");
+    let filteredImageData;
+    let filteredSegmentedData;
+
+    let width = 0;
+    let height = 0;
+
+    let hasEdges = false;
 
     $("#inputImage, #inputNoneBox").on("click", function() {
         $("#inputUpload").trigger("click");
@@ -87,21 +131,35 @@ $(() => {
     $("#inputUpload").on("change", function() {
         $(".imageNone").remove();
         $("#inputImage, #outputImage").attr("hidden", false);
-        let inputImage = $(this).prop("files")[0];
+        const inputImage = $(this).prop("files")[0];
         if (inputImage) {
-            let reader = new FileReader();
+            const reader = new FileReader();
             reader.onload = function(event) {
-                $("#inputImage").attr("src", event.target.result);
+                $("#edgeButton").attr("disabled", true);
                 $("#segmentButton").attr("disabled", false);
+                $("#postSegmentation").attr("hidden", true);
+                hasEdges = false;
 
-                let image = new Image();
+                const inputCanvas = $("#inputImage")[0];
+                const inputContext = inputCanvas.getContext("2d");
+
+                const outputCanvas = $("#outputImage")[0];
+                const outputContext = outputCanvas.getContext("2d");
+
+                const image = new Image();
                 image.onload = function() {
-                    canvas.width = image.width;
-                    canvas.height = image.height;
+                    width = image.width;
+                    height = image.height;
 
-                    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+                    inputCanvas.width = width;
+                    inputCanvas.height = height;
+                    outputCanvas.width = width;
+                    outputCanvas.height = height;
 
-                    imageData = context.getImageData(0, 0, image.width, image.height).data;
+                    inputContext.drawImage(image, 0, 0, outputCanvas.width, outputCanvas.height);
+                    outputContext.drawImage(image, 0, 0, outputCanvas.width, outputCanvas.height);
+
+                    imageData = outputContext.getImageData(0, 0, width, height).data;
                 }
                 image.src = event.target.result;
             }
@@ -136,7 +194,7 @@ $(() => {
     $("#segmentButton").on("click", function() {
         const param1 = +$("#segmentationParameter1").val();
         const param2 = +$("#segmentationParameter2").val();
-        const pixelCount = canvas.width * canvas.height;
+        const pixelCount = width * height;
         const componentCount = 3 * pixelCount;
 
         const inputPtr = Module._malloc(componentCount);
@@ -153,30 +211,27 @@ $(() => {
 
         switch (segmentationMode) {
             case 0 : // SLIC
-                Module._slic(inputPtr, outputPtr, canvas.height, canvas.width, param1, param2)
+                Module._slic(inputPtr, outputPtr, height, width, param1, param2)
                 break;
             case 1 : // Felzenszwalb
-                Module._felzenszwalb(inputPtr, outputPtr, canvas.width, canvas.height, param1, param2);
+                Module._felzenszwalb(inputPtr, outputPtr, width, height, param1, param2);
                 break;
             case 2 : // Quick Shift :
-                Module._quickShift(inputPtr, outputPtr, canvas.width, canvas.height, param2 / 1000.0, param1);
+                Module._quickShift(inputPtr, outputPtr, width, height, param2 / 1000.0, param1);
                 break;
         }
 
-        const segmentedImage = context.createImageData(canvas.width, canvas.height);
-        for (let i = 0; i < pixelCount; ++i) {
-            segmentedImage.data[4 * i] = outputImageData[3 * i];
-            segmentedImage.data[4 * i + 1] = outputImageData[3 * i + 1];
-            segmentedImage.data[4 * i + 2] = outputImageData[3 * i + 2];
-            segmentedImage.data[4 * i + 3] = imageData[4 * i + 3];
-        }
+        filteredImageData = inputImageData.slice();
+        filteredSegmentedData = outputImageData.slice();
 
-        context.putImageData(segmentedImage, 0, 0);
+        putCanvas($("#inputImage")[0], inputImageData, imageData, width, height);
 
+        putCanvas($("#outputImage")[0], outputImageData, imageData, width, height);
+        putSize($("#defaultSizeIndicator"), $("#defaultSizeUnit"), null, 24 * width * height);
         $("#postSegmentation").attr("hidden", false);
 
-        const psnrResult = psnr(inputImageData, outputImageData, canvas.width, canvas.height);
-        const ssimResult = ssim(inputImageData, outputImageData, canvas.width, canvas.height);
+        const psnrResult = psnr(inputImageData, outputImageData, width, height);
+        const ssimResult = ssim(inputImageData, outputImageData, width, height);
         $("#psnrIndicator")
             .css("color", "hsl(" + (10 * (Math.min(40, Math.max(10, psnrResult)) - 10) / 3) + ", 100%, 50%)")
             .text(psnrResult.toFixed(3));
@@ -184,9 +239,63 @@ $(() => {
             .css("color", "hsl(" + ((Math.max(0.5, ssimResult) - 0.5) * 200) + ", 100%, 50%)")
             .text(ssimResult.toFixed(3));
 
+        const intermediatePtr = Module._malloc(componentCount);
+        const intermediateImageData = new Uint8Array(Module.HEAPU8.buffer, intermediatePtr, componentCount);
+
+        const defaultSize = 24 * width * height;
+        let size = Module._compressionPalette(inputPtr, outputPtr, intermediatePtr, height, width);
+        putCanvas($("#paletteCanvas")[0], intermediateImageData, imageData, width, height);
+        putSize($("#paletteSizeIndicator"), $("#paletteSizeUnit"), $("#paletteCompIndicator"), size, defaultSize);
+
+        size = Module._compressionPredictif(outputPtr, intermediatePtr, width, height);
+        putCanvas($("#predictiveCanvas")[0], intermediateImageData, imageData, width, height);
+        putSize($("#predictiveSizeIndicator"), $("#predictiveSizeUnit"), $("#predictiveCompIndicator"), size, defaultSize);
+
+        size = Module._compressionRegion(outputPtr, intermediatePtr, width, height);
+        putCanvas($("#regionCanvas")[0], intermediateImageData, imageData, width, height);
+        putSize($("#regionSizeIndicator"), $("#regionSizeUnit"), $("#regionCompIndicator"), size, defaultSize);
+
+        Module._free(intermediatePtr);
         Module._free(inputPtr);
         Module._free(outputPtr);
+
+        $("#edgeButton").attr("disabled", false);
+        hasEdges = false;
     });
 
+    $("#edgeButton").on("click", function() {
+        if (hasEdges) {
+            putCanvas($("#inputImage")[0], filteredImageData, imageData, width, height);
+            putCanvas($("#outputImage")[0], filteredSegmentedData, imageData, width, height);
+        }
+        else {
+            const pixelCount = width * height;
+            const componentCount = 3 * pixelCount;
 
+            const inputPtr = Module._malloc(componentCount);
+            const inputImageData = new Uint8Array(Module.HEAPU8.buffer, inputPtr, componentCount);
+
+            const segmentedPtr = Module._malloc(componentCount);
+            const segmentedImageData = new Uint8Array(Module.HEAPU8.buffer, segmentedPtr, componentCount);
+            
+            for (let i = 0; i < componentCount; ++i) {
+                inputImageData[i] = filteredImageData[i];
+                segmentedImageData[i] = filteredSegmentedData[i];
+            }
+
+            const outputPtr = Module._malloc(componentCount);
+            const outputImageData = new Uint8Array(Module.HEAPU8.buffer, outputPtr, componentCount);
+
+            Module._displayEdges(inputPtr, segmentedPtr, outputPtr, width, height);
+            putCanvas($("#inputImage")[0], outputImageData, imageData, width, height);
+
+            Module._displayEdges(segmentedPtr, segmentedPtr, outputPtr, width, height);
+            putCanvas($("#outputImage")[0], outputImageData, imageData, width, height);
+
+            Module._free(outputPtr);
+            Module._free(segmentedPtr);
+            Module._free(inputPtr);
+        }
+        hasEdges = !hasEdges;
+    });
 });

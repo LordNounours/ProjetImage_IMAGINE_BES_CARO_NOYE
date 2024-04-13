@@ -10,14 +10,14 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
         <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-        <script src="segmentation.js"></script>
+        <script src="module.js"></script>
         <script src="script.js"></script>
     </head>
     <body>
 
         <div class="container my-5">
             <h1 class="h1 text-center">Compression basée superpixels</h1>
-            <h2 class="h2 text-center">Paramètres de segmentation</h1>
+            <h3 class="h3 text-center">Paramètres de segmentation</h1>
             <div class="d-flex justify-content-center">
                 <div class="row btn-row">
                     <div class="col">
@@ -44,41 +44,64 @@
 
             <hr class="sectionDelimiter">
 
-            <h2 class="h2 text-center">Image</h1>
+            <h3 class="h3 text-center">Image</h1>
             <div class="row m-2 d-flex align-items-center">
+                <input type="file" id="inputUpload" hidden accept="Image/*" />
                 <div class="col-5">
-                    <div id="inputNoneBox" class="imageNone w-100 h-100 rounded rounded-2 d-flex justify-content-center align-items-center">
+                    <div id="inputNoneBox" class="imageNone w-100 h-100 rounded rounded-3 d-flex justify-content-center align-items-center">
                         <i class="bi bi-upload text-secondary" style="font-size: 3em; line-height: 0;"></i>
                     </div>
-                    <img id="inputImage" hidden class="w-100 h-100 rounded rounded-2">
-                    <input type="file" id="inputUpload" hidden accept="Image/*" />
+                    <canvas id="inputImage" hidden class="w-100 h-100 rounded rounded-3">
                 </div>
                 <div class="col-2 d-flex flex-column justify-content-center">
                     <div class="d-flex justify-content-center">
                         <i class="bi bi-arrow-right text-secondary" style="font-size: 5em; line-height: 0;"></i>
                     </div>
                     <button type="button" id="segmentButton" disabled class="btn btn-dark mx-2">Segmenter</button>
+                    <button type="button" id="edgeButton" data-toggle="button" disabled class="btn btn-primary mx-2 mt-2">Délimiter</button>
                 </div>
                 <div class="col-5">
-                    <div class="imageNone w-100 h-100 rounded rounded-2 d-flex justify-content-center align-items-center">
+                    <div class="imageNone w-100 h-100 rounded rounded-3 d-flex justify-content-center align-items-center">
                         <i class="bi bi-puzzle text-secondary" style="font-size: 3em; line-height: 0;"></i>
                     </div>
-                    <canvas id="outputImage" hidden class="w-100 h-100 rounded rounded-2">
+                    <canvas id="outputImage" hidden class="w-100 h-100 rounded rounded-3">
                 </div>
             </div>
 
             <div hidden id="postSegmentation">
                 <hr class="sectionDelimiter">
 
-                <h2 class="h2 text-center">Données</h1>
+                <h3 class="h3 text-center">Données</h1>
                 <div class="w-75 mx-auto row">
                     <div class="col text-center metric">PSNR : <strong id="psnrIndicator">0.000</strong> dB</div>
                     <div class="col text-center metric">SSIM : <strong id="ssimIndicator">0.000</strong></div>
                 </div>
 
-                <!--<hr class="sectionDelimiter">
+                <hr class="sectionDelimiter">
 
-                <h2 class="h2 text-center">Compression</h1>-->
+                <h3 class="h3 text-center">Compression</h1>
+
+                <div class="w-100 text-center my-1">Taille (raw) : <strong id="defaultSizeIndicator">0.000</strong> <span id="defaultSizeUnit"></span></div>
+                <div class="row">
+                    <div class="col-4 d-flex flex-column">
+                        <h4 class="h4 text-center">Palette</h4>
+                        <canvas id="paletteCanvas" class="w-100 h-100 rounded rounded-3"></canvas>
+                        <div class="mx-auto">Taille (raw) : <strong id="paletteSizeIndicator">0.000</strong> <span id="paletteSizeUnit"></span></div>
+                        <div class="mx-auto">Taux de compression : <strong id="paletteCompIndicator">0.000</strong></div>
+                    </div>
+                    <div class="col-4 d-flex flex-column">
+                        <h4 class="h4 text-center">Prédictif + RLE</h4>
+                        <canvas id="predictiveCanvas" class="w-100 h-100 rounded rounded-3"></canvas>
+                        <div class="mx-auto">Taille (raw) : <strong id="predictiveSizeIndicator">0.000</strong> <span id="predictiveSizeUnit"></span></div>
+                        <div class="mx-auto">Taux de compression : <strong id="predictiveCompIndicator">0.000</strong></div>
+                    </div>
+                    <div class="col-4 d-flex flex-column">
+                        <h4 class="h4 text-center">Région</h4>
+                        <canvas id="regionCanvas" class="w-100 h-100 rounded rounded-3"></canvas>
+                        <div class="mx-auto">Taille (raw) : <strong id="regionSizeIndicator">0.000</strong> <span id="regionSizeUnit"></span></div>
+                        <div class="mx-auto">Taux de compression : <strong id="regionCompIndicator">0.000</strong></div>
+                    </div>
+                </div>
             </div>
         </div>
     </body>

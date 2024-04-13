@@ -8,11 +8,11 @@
 }
 
 #inputNoneBox:hover {
-    filter: brightness(105%);
+    filter: brightness(110%);
 }
 
 .sectionDelimiter {
-    border-width: 2px;
+    border-width: 3px;
 }
 
 .metric {
@@ -21,6 +21,6 @@
 
 .imageNone {
     width: 100%;
-    min-height: 160px;
+    min-height: 200px;
     background-color: lightgray;
 }
