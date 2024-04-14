@@ -107,9 +107,18 @@ function putSize(sizeElement, unitElement, compElement, size, defaultSize) {
     if (compElement !== null) {
         const compRate = defaultSize / size;
         compElement
-            .css("color", "hsl(" + Math.max(0, Math.min(100.0, 50.0 * Math.sqrt(Math.max(1.0, compRate) - 1.0))) + ", 100%, 50%)")
+            .css("color", "hsl(" + Math.max(0, Math.min(100.0, 50.0 * Math.sqrt(Math.max(1.0, compRate) - 1.0))) + ", 90%, 50%)")
             .text(compRate.toFixed(3));
     }
+}
+
+function putPSNRSSIM(psnrElement, ssimElement, psnrValue, ssimValue) {
+    psnrElement
+        .css("color", "hsl(" + (10 * (Math.min(40, Math.max(10, psnrValue)) - 10) / 3) + ", 90%, 50%)")
+        .text(psnrValue.toFixed(3));
+    ssimElement
+        .css("color", "hsl(" + ((Math.max(0.5, ssimValue) - 0.5) * 200) + ", 90%, 50%)")
+        .text(ssimValue.toFixed(3));
 }
 
 $(() => {
@@ -232,12 +241,9 @@ $(() => {
 
         const psnrResult = psnr(inputImageData, outputImageData, width, height);
         const ssimResult = ssim(inputImageData, outputImageData, width, height);
-        $("#psnrIndicator")
-            .css("color", "hsl(" + (10 * (Math.min(40, Math.max(10, psnrResult)) - 10) / 3) + ", 100%, 50%)")
-            .text(psnrResult.toFixed(3));
-        $("#ssimIndicator")
-            .css("color", "hsl(" + ((Math.max(0.5, ssimResult) - 0.5) * 200) + ", 100%, 50%)")
-            .text(ssimResult.toFixed(3));
+        putPSNRSSIM($("#psnrIndicator"), $("#ssimIndicator"), psnrResult, ssimResult);
+        putPSNRSSIM($("#predictivePsnrIndicator"), $("#predictiveSsimIndicator"), psnrResult, ssimResult);
+        putPSNRSSIM($("#regionPsnrIndicator"), $("#regionSsimIndicator"), psnrResult, ssimResult);
 
         const intermediatePtr = Module._malloc(componentCount);
         const intermediateImageData = new Uint8Array(Module.HEAPU8.buffer, intermediatePtr, componentCount);
@@ -246,6 +252,10 @@ $(() => {
         let size = Module._compressionPalette(inputPtr, outputPtr, intermediatePtr, height, width);
         putCanvas($("#paletteCanvas")[0], intermediateImageData, imageData, width, height);
         putSize($("#paletteSizeIndicator"), $("#paletteSizeUnit"), $("#paletteCompIndicator"), size, defaultSize);
+
+        const psnrPalette = psnr(inputImageData, intermediateImageData, width, height);
+        const ssimPalette = ssim(inputImageData, intermediateImageData, width, height);
+        putPSNRSSIM($("#palettePsnrIndicator"), $("#paletteSsimIndicator"), psnrPalette, ssimPalette);
 
         size = Module._compressionPredictif(outputPtr, intermediatePtr, width, height);
         putCanvas($("#predictiveCanvas")[0], intermediateImageData, imageData, width, height);

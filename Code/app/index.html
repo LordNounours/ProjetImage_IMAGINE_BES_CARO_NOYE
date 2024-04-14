@@ -71,7 +71,7 @@
             <div hidden id="postSegmentation">
                 <hr class="sectionDelimiter">
 
-                <h3 class="h3 text-center">Données</h1>
+                <h3 class="h3 text-center">Données de la segmentation</h1>
                 <div class="w-75 mx-auto row">
                     <div class="col text-center metric">PSNR : <strong id="psnrIndicator">0.000</strong> dB</div>
                     <div class="col text-center metric">SSIM : <strong id="ssimIndicator">0.000</strong></div>
@@ -86,22 +86,29 @@
                     <div class="col-4 d-flex flex-column">
                         <h4 class="h4 text-center">Palette</h4>
                         <canvas id="paletteCanvas" class="w-100 h-100 rounded rounded-3"></canvas>
+                        <div class="mx-auto">PSNR : <strong id="palettePsnrIndicator">0.000</strong> dB</div>
+                        <div class="mx-auto">SSIM : <strong id="paletteSsimIndicator">0.000</strong></div>
                         <div class="mx-auto">Taille (raw) : <strong id="paletteSizeIndicator">0.000</strong> <span id="paletteSizeUnit"></span></div>
                         <div class="mx-auto">Taux de compression : <strong id="paletteCompIndicator">0.000</strong></div>
                     </div>
                     <div class="col-4 d-flex flex-column">
-                        <h4 class="h4 text-center">Prédictif + RLE</h4>
+                        <h4 class="h4 text-center">Prédictif + RLE*</h4>
                         <canvas id="predictiveCanvas" class="w-100 h-100 rounded rounded-3"></canvas>
+                        <div class="mx-auto">PSNR : <strong id="predictivePsnrIndicator">0.000</strong> dB</div>
+                        <div class="mx-auto">SSIM : <strong id="predictiveSsimIndicator">0.000</strong></div>
                         <div class="mx-auto">Taille (raw) : <strong id="predictiveSizeIndicator">0.000</strong> <span id="predictiveSizeUnit"></span></div>
                         <div class="mx-auto">Taux de compression : <strong id="predictiveCompIndicator">0.000</strong></div>
                     </div>
                     <div class="col-4 d-flex flex-column">
-                        <h4 class="h4 text-center">Région</h4>
+                        <h4 class="h4 text-center">Région*</h4>
                         <canvas id="regionCanvas" class="w-100 h-100 rounded rounded-3"></canvas>
+                        <div class="mx-auto">PSNR : <strong id="regionPsnrIndicator">0.000</strong> dB</div>
+                        <div class="mx-auto">SSIM : <strong id="regionSsimIndicator">0.000</strong></div>
                         <div class="mx-auto">Taille (raw) : <strong id="regionSizeIndicator">0.000</strong> <span id="regionSizeUnit"></span></div>
                         <div class="mx-auto">Taux de compression : <strong id="regionCompIndicator">0.000</strong></div>
                     </div>
                 </div>
+                <div class="w-100 text-center mt-4 font-italic">*La compression est effectuée sans perte sur l'image segmentée. L'affichage montre l'étape intermédiaire de ces méthodes.</div>
             </div>
         </div>
     </body>
