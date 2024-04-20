@@ -12,11 +12,11 @@ def process_frame(frame, method, param1, param2):
 
     m = method[0].lower()
     if m == "s" : # SLIC
-        subprocess.run(["../../bin/slic", temp_file, temp_file, str(int(param1)), str(int(param2))])
+        subprocess.run(["../bin/slic", temp_file, temp_file, str(int(param1)), str(int(param2))])
     elif m == "f" : # Fenzelszwalb
-        subprocess.run(["../../bin/felzenszwalb", temp_file, temp_file, str(param1), str(int(param2))])
+        subprocess.run(["../bin/felzenszwalb", temp_file, temp_file, str(param1), str(int(param2))])
     elif m == "q": # QuickShift
-        subprocess.run(["../../bin/quickshift", temp_file, temp_file, str(param2 / 1000.0), str(int(param1))])
+        subprocess.run(["../bin/quickshift", temp_file, temp_file, str(param2 / 1000.0), str(int(param1))])
 
     processed_frame = cv2.imread(temp_file)
     os.remove(temp_file)
