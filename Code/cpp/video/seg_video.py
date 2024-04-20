@@ -57,9 +57,9 @@ if __name__ == "__main__":
     input_file = sys.argv[1]
     output_file = "output_video.mp4"
     method = sys.argv[2]
-    param1start = sys.argv[3]
-    param2start = sys.argv[4]
-    param1end = sys.argv[5]
-    param2end = sys.argv[6]
+    param1start = float(sys.argv[3])
+    param2start = float(sys.argv[4])
+    param1end = float(sys.argv[5])
+    param2end = float(sys.argv[6])
 
     process_video(input_file, output_file, method, param1start, param2start, param1end, param2end)
